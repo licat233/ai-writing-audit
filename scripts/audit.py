@@ -32,6 +32,81 @@ ZH_PATTERNS = [
     ("STRUCTURE-MECHANICAL-SECTIONS", r"(?:首先|其次|最后)[，,]", "structure", "low", "moderate", "style_choice", "Repeated ordinal transitions can make sections feel mechanically generated.", "Keep them when they reflect real sequencing; otherwise use meaningful transitions.", "native"),
 ]
 
+PROFILES_DIR = ROOT / "profiles"
+
+# ARMOR domain facts, enabled only when the active profile lists them
+# (profiles/armor.yaml -> facts). These detect unsupported product claims
+# that generic AI-style rules cannot see. Sources: ARMOR Vault product KB.
+ARMOR_FACT_RULES = {
+    "esl-is-not-lcd": (
+        "ARMOR-FACT-ESL-IS-NOT-LCD",
+        r"\bESL\b[^.!?]{0,60}\b(?:is|are|means?|stands for|equals?)\b[^.!?]{0,30}\bLCD\b",
+        "facts", "high", "moderate", "factual_conflict",
+        "The copy equates ESL with LCD, which are distinct product categories.",
+        "Say 'ESL' or 'LCD-type ESL' only when it matches the actual product; do not equate the categories.",
+        "armor-product-knowledge",
+    ),
+    "esl-not-electrically-connected-to-power-track-without-evidence": (
+        "ARMOR-FACT-ESL-POWER-TRACK-CONNECTION",
+        r"\bESL\b[^.!?]{0,60}\b(?:electrically connected|wired|powered by|draws? power from)\b[^.!?]{0,30}\b(?:power track|track)\b",
+        "facts", "high", "moderate", "needs_domain_review",
+        "The copy asserts an electrical connection to the power track without confirmed evidence.",
+        "Confirm the connection method with product documentation, or mark the claim [TO CONFIRM].",
+        "armor-product-knowledge",
+    ),
+    "magnetic-light-needs-compatible-steel-surface": (
+        "ARMOR-FACT-MAGNETIC-SURFACE-REQUIREMENT",
+        r"\bmagnetic\b[^.!?]{0,70}\b(?:any surface|all surfaces|every surface|any shelf|all shelves|no surface preparation|no prep)\b",
+        "facts", "high", "moderate", "needs_domain_review",
+        "The copy implies magnetic lights work on any surface; they require ferromagnetic (steel/iron) shelf surfaces.",
+        "State the ferromagnetic surface requirement or the alternative mounting method.",
+        "armor-product-knowledge",
+    ),
+    "no-unsupported-zero-install-cost-or-roi": (
+        "ARMOR-FACT-UNSUPPORTED-ZERO-INSTALL-ROI",
+        r"\b(?:zero|no|free)\s+install(?:ation)?\s+cost\b|\bROI\b[^.!?]{0,40}\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*%\s+ROI\b",
+        "facts", "high", "moderate", "unsupported_claim",
+        "The copy states zero install cost or a specific ROI figure without a supporting source.",
+        "Add a verified source or case data, or replace the figure with a qualified statement.",
+        "armor-product-knowledge",
+    ),
+    "verify-voltage-and-connection": (
+        "ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION",
+        r"\b\d{2,4}\s*[Vv]\b",
+        "facts", "medium", "low", "needs_domain_review",
+        "The copy gives a specific voltage or connection value without verification.",
+        "Verify the voltage and connection against product documentation, or mark [TO CONFIRM].",
+        "armor-product-knowledge",
+    ),
+}
+
+
+def load_profile_facts(profile_id: str) -> list[str]:
+    """Read the facts list from profiles/<id>.yaml. Standard library only."""
+    path = PROFILES_DIR / f"{profile_id}.yaml"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    m = re.search(r"^\s*facts:\s*\[([^\]]+)\]", text, re.M)
+    if not m:
+        return []
+    return [x.strip().strip("\"'") for x in m.group(1).split(",") if x.strip()]
+
+
+def armor_fact_findings(text: str, facts: list[str], protected: list[tuple[int, int]]) -> list[Finding]:
+    findings = []
+    for fact_id in facts:
+        rule = ARMOR_FACT_RULES.get(fact_id)
+        if not rule:
+            continue
+        rule_id, pattern, category, severity, confidence, repair_type, diagnosis, action, sources = rule
+        for match in re.finditer(pattern, text, re.I):
+            evidence = match.group(0).strip()
+            if not evidence:
+                continue
+            findings.append(Finding(rule_id, "local-static-scanner", category, severity, confidence, evidence, match.start(), match.end(), diagnosis, action, repair_type, (sources,), is_protected(match.start(), match.end(), protected)))
+    return findings
+
 
 def protected_spans(text: str) -> list[tuple[int, int]]:
     spans = []
@@ -61,6 +136,8 @@ def scan_text(text: str, context: AuditContext) -> list[Finding]:
             if not evidence:
                 continue
             findings.append(Finding(rule_id, "local-static-scanner", category, severity, confidence, evidence, match.start(), match.end(), diagnosis, action, repair_type, tuple(sources.split(";")), is_protected(match.start(), match.end(), protected)))
+    for profile_id in context.profile_ids:
+        findings.extend(armor_fact_findings(text, load_profile_facts(profile_id), protected))
     return findings
 
 
@@ -88,10 +165,12 @@ def risk(findings: list[Finding]) -> tuple[str, dict]:
     dimensions = {"template_language": 0, "generic_claims": 0, "semantic_repetition": 0, "structural_uniformity": 0, "evidence_deficiency": 0, "tone_mismatch": 0, "missing_constraints": 0}
     for f in findings:
         value = 25 if f.severity == "low" else 50 if f.severity == "medium" else 75 if f.severity == "high" else 100
-        key = "evidence_deficiency" if f.category == "evidence" else "generic_claims" if f.category == "content_quality" else "template_language" if f.category in {"language", "chatbot_artifact"} else "structural_uniformity"
+        key = "evidence_deficiency" if f.category in {"evidence", "facts"} else "generic_claims" if f.category == "content_quality" else "template_language" if f.category in {"language", "chatbot_artifact"} else "structural_uniformity"
         dimensions[key] = min(100, dimensions[key] + value)
     score = round(sum(dimensions.values()) / len(dimensions))
     level = "low" if score <= 20 else "moderate" if score <= 45 else "high" if score <= 70 else "critical"
+    if any(f.category == "facts" for f in findings):
+        level = "high" if level in {"low", "moderate"} else level
     return level, dimensions
 
 

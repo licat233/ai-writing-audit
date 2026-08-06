@@ -10,6 +10,9 @@ CLI = ROOT / "scripts" / "audit.py"
 def run(name):
     return subprocess.run([sys.executable, str(CLI), str(ROOT / "tests" / "fixtures" / name), "--format", "json"], capture_output=True, text=True, check=True)
 
+def run_profile(name, profile):
+    return subprocess.run([sys.executable, str(CLI), str(ROOT / "tests" / "fixtures" / name), "--profile", profile, "--format", "json"], capture_output=True, text=True, check=True)
+
 class AuditTests(unittest.TestCase):
   def test_english_report_has_provenance(self):
     data = json.loads(run("english.md").stdout)
@@ -30,3 +33,15 @@ class AuditTests(unittest.TestCase):
   def test_strict_returns_nonzero(self):
     result = subprocess.run([sys.executable, str(CLI), str(ROOT / "tests" / "fixtures" / "english.md"), "--strict"], capture_output=True, text=True)
     self.assertEqual(result.returncode, 2)
+
+  def test_armor_profile_flags_armor_facts_only(self):
+    general = json.loads(run_profile("armor-claims.md", "general").stdout)
+    armor = json.loads(run_profile("armor-claims.md", "armor").stdout)
+    self.assertFalse(any(f["rule_id"].startswith("ARMOR-FACT-") for f in general["findings"]))
+    armor_rules = {f["rule_id"] for f in armor["findings"]}
+    self.assertIn("ARMOR-FACT-ESL-IS-NOT-LCD", armor_rules)
+    self.assertIn("ARMOR-FACT-ESL-POWER-TRACK-CONNECTION", armor_rules)
+    self.assertIn("ARMOR-FACT-MAGNETIC-SURFACE-REQUIREMENT", armor_rules)
+    self.assertIn("ARMOR-FACT-UNSUPPORTED-ZERO-INSTALL-ROI", armor_rules)
+    self.assertIn("ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION", armor_rules)
+    self.assertEqual(armor["risk"]["level"], "high")

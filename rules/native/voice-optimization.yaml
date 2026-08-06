@@ -1,0 +1,20 @@
+schema_version: 1
+rules:
+  - id: NATIVE-ABSTRACT-TO-SPECIFIC
+    category: content_quality
+    action: replace_abstract_claim_with_supplied_mechanism_or_mark_missing_fact
+  - id: NATIVE-SEMANTIC-REPETITION
+    category: structure
+    action: merge_repeated_claims_and_keep_the_strongest_supported_version
+  - id: NATIVE-PARAGRAPH-LOGIC
+    category: structure
+    action: give_each_paragraph_one_job_and_add_real_transitions
+  - id: NATIVE-RHYTHM-BY-MEANING
+    category: sentence_structure
+    action: vary_sentence_length_at_meaning_boundaries_without_random_errors
+  - id: NATIVE-EVIDENCE-CALIBRATION
+    category: evidence
+    action: weaken_or_mark_claims_that_exceed_available_evidence
+  - id: NATIVE-VOICE-PRESERVATION
+    category: style
+    action: preserve_author_register_terminology_and_deliberate_style_choices

@@ -1,6 +1,6 @@
 ---
 name: ai-writing-audit
-description: Audit Markdown or plain-text articles for AI-style writing risk using local, source-traceable rules. Use when the user asks to detect AI-like language, formulaic structure, generic claims, evidence gaps, or to review an article without modifying it. Supports detect mode first, with repair/edit/compare reserved for later phases; never infer authorship or output an AI-generation probability.
+description: Audit and fully polish Markdown or plain-text articles for AI-style writing risk using local, source-traceable rules. Use when the user asks to detect AI-like language, rewrite AI-sounding prose, humanize an article, remove formulaic structure, improve specificity, or review an article. Supports detect and agent-led repair workflows; never infer authorship, fabricate facts, or output an AI-generation probability.
 license: MIT
 metadata:
   hermes:
@@ -23,6 +23,8 @@ Use this skill as a local audit orchestrator. It measures patterns that may make
 - Never invent facts, numbers, sources, cases, product capabilities, or personal experience.
 - Report `low`, `moderate`, `high`, or `critical` AI-style risk only. Never report authorship probability.
 - Prefer concrete evidence and a small number of actionable findings over a long list of weak signals.
+- When the user requests润色、改写、humanize, or repair, do not stop at a diagnosis. Produce a complete revised article unless the user explicitly asks for suggestions only.
+- Optimize for credible authorship signals—specificity, judgment, constraints, concrete transitions, and varied rhythm—not detector evasion, random errors, or forced informality.
 
 ## Workflow
 
@@ -35,18 +37,30 @@ Use this skill as a local audit orchestrator. It measures patterns that may make
 
    Resolve `/path/to/ai-writing-audit` as the directory containing this `SKILL.md`; do not assume the agent's current working directory. Use `--format json` for machine-readable output, `--strict` for non-zero exit on findings, and `--output PATH` to save a report.
 3. Explain the overall risk as an editorial risk assessment, then prioritize findings by factual/evidence risk, semantic quality, and only then weak style signals.
-4. For a repair request, first audit, propose minimal fact-preserving edits, and identify missing facts as review placeholders. Do not claim that a repair makes text “undetectable.” Phase 1 does not provide automatic repair/edit/compare execution.
+4. For a repair request, read `references/native-optimization.md` and follow the full repair loop: extract facts and voice, rebuild structure, rewrite the complete article, run the same audit again, and report unresolved evidence gaps. Do not claim that a repair makes text “undetectable.”
 5. If the CLI is unavailable or an optional adapter is missing, report the limitation explicitly and continue with local scanning.
 
 ## Profiles
 
-Profiles adjust weights and exceptions; they do not replace the base rules. Read `profiles/<name>.yaml` when a profile is selected. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
+Profiles adjust weights and exceptions; they do not replace the base rules. Read `profiles/<name>.yaml` when a profile is selected. The `armor` profile additionally enables the ARMOR domain facts listed in `profiles/armor.yaml` (e.g. `esl-is-not-lcd`, `no-unsupported-zero-install-cost-or-roi`); these produce `ARMOR-FACT-*` findings with repair type `factual_conflict`, `unsupported_claim`, or `needs_domain_review`, and a `facts`-category finding raises the overall risk to at least `high`. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
 
 ## Output contract
 
 Every finding should include a normalized rule ID, category, severity, confidence, location when available, evidence, diagnosis, recommended action, repair type, and provenance. The JSON report must validate against `schemas/report.schema.json`.
 
 The score is an editorial risk score, not the probability that AI authored the text. Mention limitations when the document is short, highly technical, heavily quoted, or lacks enough context.
+
+## Full-repair deliverables
+
+For a requested full polish, return these in order:
+
+1. A short diagnosis of the original article.
+2. The complete revised article in one clearly marked block.
+3. A concise change log covering structure, specificity, rhythm, voice, and factual safeguards.
+4. A list of unresolved facts, sources, or domain decisions that the user must confirm.
+5. A post-repair audit summary. If the revised copy still has risk signals, explain which are intentional or require source material.
+
+Never return only scattered sentence replacements when the user asked for a complete article.
 
 ## Maintenance
 

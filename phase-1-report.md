@@ -6,6 +6,7 @@
 - Investigated and locked five upstream repositories with commit and license metadata.
 - Added manifest, lock file, source registry, notices, profiles, finding/report schemas, and a standard-library-only offline CLI.
 - Implemented English and Chinese static rules, protected-region recognition, basic finding deduplication, adapter status reporting, Markdown/JSON output, strict exit behavior, and tests.
+- Enabled the `armor` profile: `audit.py` now reads `profiles/armor.yaml` and applies its `facts` list as `ARMOR-FACT-*` domain checks (ESL≠LCD, power-track connection needs evidence, magnetic lights need ferromagnetic surfaces, no unsupported zero-install-cost/ROI, verify voltage). A `facts`-category finding raises overall risk to at least `high`.
 - Added provenance for the required `avoid-ai-writing` workflow and `blader/humanizer` pattern references without vendoring upstream code.
 
 ## Not completed
@@ -17,7 +18,7 @@
 
 ## Known limitations
 
-The Phase 1 scanner is conservative and deterministic. A finding is an editorial review signal, not evidence of authorship. Profile files currently document intended exceptions/focus areas; deep profile weighting is deferred.
+The Phase 1 scanner is conservative and deterministic. A finding is an editorial review signal, not evidence of authorship. Profile weighting beyond the `armor` facts list (per-profile weights and exceptions) is deferred.
 
 ## Test command
 
@@ -27,4 +28,4 @@ python3 -m unittest discover -s tests
 
 ## Next phase
 
-Implement adapter registry execution and explicit upstream sync/license verification, then add semantic audit findings and the larger regression corpus before enabling repair workflows.
+Implement adapter registry execution and explicit upstream sync/license verification, then add semantic audit findings and the larger regression corpus. The agent-led native full-repair workflow is now documented in `references/native-optimization.md`; deterministic file mutation remains disabled until a later phase.

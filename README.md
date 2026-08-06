@@ -15,6 +15,17 @@ The scanner does not upload article content, does not modify the input by defaul
 
 The same folder can be installed as a Skill in Codex, Claude Code, or Hermes Agent. The runtime only needs Python 3.9+ and the standard library.
 
+## Full article polish
+
+The Skill now supports an agent-led full repair workflow. Ask the agent explicitly:
+
+```text
+Use $ai-writing-audit to fully polish this article.
+First audit it, then rewrite the complete article so it is more specific, coherent, natural, and consistent with the supplied facts and intended audience. Preserve quotes, code, tables, terminology, and factual limits. Do not invent data or personal experience. Return the diagnosis, the complete revised article, a change log, unresolved fact gaps, and a post-repair audit.
+```
+
+The repair workflow is not a synonym for “make it undetectable.” It improves editorial quality and reduces formulaic patterns while preserving truth, constraints, and the author's intended register. See [`references/native-optimization.md`](references/native-optimization.md) for the full method.
+
 ## Installation
 
 The repository is private. Make sure the agent or terminal is authenticated to GitHub as an account that can read `licat233/ai-writing-audit`.
