@@ -1,0 +1,8 @@
+schema_version: 1
+rules:
+  - id: SENTENCE-NEGATIVE-PARALLELISM
+    source: {project: conorbronsdon/avoid-ai-writing, repository: https://github.com/conorbronsdon/avoid-ai-writing, upstream_rule: sentence.not_x_but_y, license: MIT, commit: a575602b3d6cb313dd0ceaf03a121fd8a79c18a6, adapted: true}
+  - id: FORMAT-DASH-DENSITY
+    source: {project: blader/humanizer, repository: https://github.com/blader/humanizer, upstream_rule: formatting, license: MIT, commit: 523374dee72d67c7b2b5f858ea0094ffda49c3ac, adapted: true}
+  - id: CONTENT-GENERIC-CLAIM
+    source: {project: native, repository: local, upstream_rule: semantic-quality, license: MIT, commit: local, adapted: false}

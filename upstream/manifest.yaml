@@ -1,0 +1,27 @@
+schema_version: 1
+sources:
+  - id: conorbronsdon-avoid-ai-writing
+    repository: conorbronsdon/avoid-ai-writing
+    homepage: https://github.com/conorbronsdon/avoid-ai-writing
+    integration: adapted-skill
+    required: true
+  - id: blader-humanizer
+    repository: blader/humanizer
+    homepage: https://github.com/blader/humanizer
+    integration: rules-reference
+    required: false
+  - id: harshaneel-humanize
+    repository: harshaneel/humanize
+    homepage: https://github.com/harshaneel/humanize
+    integration: adapted-skill
+    required: false
+  - id: aboudjem-humanizer-skill
+    repository: Aboudjem/humanizer-skill
+    homepage: https://github.com/Aboudjem/humanizer-skill
+    integration: rules-reference
+    required: false
+  - id: gabelul-slopbuster
+    repository: gabelul/slopbuster
+    homepage: https://github.com/gabelul/slopbuster
+    integration: optional-cli
+    required: false

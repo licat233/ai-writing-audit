@@ -1,0 +1,8 @@
+interface:
+  display_name: "AI Writing Audit"
+  short_description: "Source-traceable AI-style writing risk audit"
+  brand_color: "#334155"
+  default_prompt: "Use $ai-writing-audit to audit this article for AI-style writing risk without judging authorship."
+
+policy:
+  allow_implicit_invocation: true

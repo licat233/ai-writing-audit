@@ -1,0 +1,43 @@
+schema_version: 1
+generated_at: "2026-08-06T00:00:00Z"
+sources:
+  conorbronsdon-avoid-ai-writing:
+    repository: conorbronsdon/avoid-ai-writing
+    ref: v3.23.1
+    commit: a575602b3d6cb313dd0ceaf03a121fd8a79c18a6
+    license: MIT
+    integration: adapted-skill
+    enabled: true
+    verified_at: "2026-08-06"
+  blader-humanizer:
+    repository: blader/humanizer
+    ref: v2.9.1
+    commit: 523374dee72d67c7b2b5f858ea0094ffda49c3ac
+    license: MIT
+    integration: rules-reference
+    enabled: true
+    verified_at: "2026-08-06"
+  harshaneel-humanize:
+    repository: harshaneel/humanize
+    ref: main
+    commit: 4ec797314537ec9c2105f276d4561d240a0390ba
+    license: MIT
+    integration: adapted-skill
+    enabled: false
+    verified_at: "2026-08-06"
+  aboudjem-humanizer-skill:
+    repository: Aboudjem/humanizer-skill
+    ref: v0.1.0
+    commit: 9a7f35b7b9ad8c3abd71f10757ec9f91fb8ae165
+    license: MIT
+    integration: rules-reference
+    enabled: false
+    verified_at: "2026-08-06"
+  gabelul-slopbuster:
+    repository: gabelul/slopbuster
+    ref: main
+    commit: 8215cbfc9723a52696fb493bd66059663b43c750
+    license: MIT
+    integration: optional-cli
+    enabled: false
+    verified_at: "2026-08-06"
