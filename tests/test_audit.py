@@ -45,3 +45,10 @@ class AuditTests(unittest.TestCase):
     self.assertIn("ARMOR-FACT-UNSUPPORTED-ZERO-INSTALL-ROI", armor_rules)
     self.assertIn("ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION", armor_rules)
     self.assertEqual(armor["risk"]["level"], "high")
+
+  def test_detects_whole_article_template_signals(self):
+    data = json.loads(run("machine-template.md").stdout)
+    rules = {f["rule_id"] for f in data["findings"]}
+    self.assertIn("STRUCTURE-TEMPLATE-ENDCAP", rules)
+    self.assertIn("STRUCTURE-PARAGRAPH-UNIFORMITY", rules)
+    self.assertIn("CONTENT-ABSTRACT-BENEFIT-DENSITY", rules)

@@ -24,6 +24,26 @@ Prefer this progression where it fits:
 
 Do not force this structure onto a technical reference, legal text, or a deliberately fragmentary style.
 
+### Choose an opening with a reason to exist
+
+Select the strongest opening supported by the source:
+
+1. a specific observed scene or operational detail;
+2. a buyer decision or mistake with a concrete consequence;
+3. a tension between the obvious solution and the actual constraint;
+4. a verified result, limitation, or product mechanism;
+5. a direct statement of the problem when no richer material exists.
+
+Do not open by paraphrasing the title, announcing that the topic is important, or inventing a store visit, customer reaction, trend, or date. A plain truthful opening is better than cinematic fiction.
+
+### Make section depth asymmetric
+
+Allocate space by information value. A difficult mechanism may need several paragraphs; a secondary point may need one sentence. Remove parallel headings that merely divide a list into equal blocks. Keep FAQ only when readers genuinely use the page as a reference or the user explicitly needs an SEO FAQ.
+
+### Expose a real reasoning move
+
+Move between paragraphs through one of these relationships: cause, correction, condition, trade-off, exception, evidence, consequence, or decision. A “common assumption → observed constraint → revised decision” sequence is useful only when the assumption and constraint are grounded in supplied material.
+
 ## 3. Replace AI-like abstraction with supplied specificity
 
 Review every broad phrase such as “improves efficiency,” “plays a vital role,” “seamless,” “empowers,” “注入活力,” or “具有重要意义.” Replace it only when the source gives enough information to name:
@@ -46,6 +66,12 @@ When information is missing, preserve the claim cautiously and insert `[需要�
 - Keep necessary technical repetition, formal caution, and domain terminology.
 - Do not add typos, slang, fake personal anecdotes, or awkward fragments just to appear human.
 
+### Use perspective without inventing a persona
+
+First person is evidence-bearing language. Use “I” or “we” only when the user supplies the speaker and experience. If the source has operational detail but no first-person authority, write from the situation itself: describe what changes on the shelf, in the workflow, or in the buyer's decision. If neither experience nor detail exists, keep the voice direct and neutral and mark the missing input.
+
+One specific judgment is more credible than scattered conversational fillers. Prefer a defensible stance such as “adding more ceiling light does not solve a shadow under the second shelf” when the mechanism is supported. Avoid generic attitude markers such as “讲真,” “显然,” or “毫无疑问” unless they match a supplied voice sample.
+
 ## 5. Preserve truth and voice
 
 - Never create a statistic, customer story, citation, product feature, test result, or personal experience.
@@ -66,5 +92,9 @@ After writing the full revision, check:
 6. Sentence and paragraph rhythm follows meaning rather than a uniform template.
 7. Protected content and deliberate style choices were not “corrected” mechanically.
 8. A second audit finds fewer high-confidence, high-impact issues—or clearly explains why a remaining issue is intentional.
+9. The opening is supported by source material and does not merely restate the title.
+10. Section lengths and headings are not mechanically symmetrical unless the genre requires a reference layout.
+11. Any first-person experience, quotation, dialogue, humor, or field detail is attributable to supplied material.
+12. The ending completes a decision, implication, or next action instead of repeating a generic summary or attaching an unnecessary FAQ.
 
 The target is a more specific, coherent, honest article with a recognizable editorial voice. It is not a promise to bypass Turnitin, ZeroGPT, or any other detector.

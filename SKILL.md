@@ -4,7 +4,7 @@ description: Audit and fully polish Markdown or plain-text articles for AI-style
 license: MIT
 metadata:
   hermes:
-    version: 0.1.0
+    version: 0.2.0
     platforms: [macos, linux]
     tags: [writing, audit, ai-style, editing, chinese, english]
     related_skills: []
@@ -36,9 +36,18 @@ Use this skill as a local audit orchestrator. It measures patterns that may make
    ```
 
    Resolve `/path/to/ai-writing-audit` as the directory containing this `SKILL.md`; do not assume the agent's current working directory. Use `--format json` for machine-readable output, `--strict` for non-zero exit on findings, and `--output PATH` to save a report.
-3. Explain the overall risk as an editorial risk assessment, then prioritize findings by factual/evidence risk, semantic quality, and only then weak style signals.
-4. For a repair request, read `references/native-optimization.md` and follow the full repair loop: extract facts and voice, rebuild structure, rewrite the complete article, run the same audit again, and report unresolved evidence gaps. Do not claim that a repair makes text “undetectable.”
+3. Explain the overall risk as an editorial risk assessment, then prioritize findings by factual/evidence risk, whole-article predictability, semantic quality, and only then weak word or punctuation signals.
+4. For a repair request, read `references/native-optimization.md` completely and follow the full repair loop: extract facts and voice, choose a supported opening angle, rebuild the argument, rewrite the complete article, run the same audit again, and report unresolved evidence gaps. Do not claim that a repair makes text “undetectable.”
 5. If the CLI is unavailable or an optional adapter is missing, report the limitation explicitly and continue with local scanning.
+
+## Repair mode decisions
+
+- Prefer a scene, tension, buyer decision, failure mode, or counterintuitive observation as the opening only when the source or user provides enough material.
+- Use first person only for an attributed speaker, supplied author experience, or verified brand experience. Never manufacture “I saw,” “we found,” customer dialogue, or field observations.
+- Use conversational asides, humor, or a strong stance only when they fit the author sample and publication context. Do not sprinkle slang as camouflage.
+- Let section and paragraph lengths follow information value. Do not force symmetry, identical heading patterns, a summary section, or FAQ unless the document purpose requires them.
+- Show a real reasoning move—contrast, correction, condition, trade-off, or consequence—between sections. Do not imitate thinking with empty phrases such as “you may think…but actually.”
+- If missing source material prevents a credible scene or specific claim, use a neutral version plus a visible confirmation marker, or ask a focused question when the answer would materially change the article.
 
 ## Profiles
 
@@ -61,6 +70,8 @@ For a requested full polish, return these in order:
 5. A post-repair audit summary. If the revised copy still has risk signals, explain which are intentional or require source material.
 
 Never return only scattered sentence replacements when the user asked for a complete article.
+
+Before presenting the revision, silently run the post-repair gates in `references/native-optimization.md`. Rewrite again if the article still uses a template opening, interchangeable sections, repeated summary language, evenly padded paragraphs, or invented human details.
 
 ## Maintenance
 

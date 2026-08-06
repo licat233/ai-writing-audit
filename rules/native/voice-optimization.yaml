@@ -18,3 +18,12 @@ rules:
   - id: NATIVE-VOICE-PRESERVATION
     category: style
     action: preserve_author_register_terminology_and_deliberate_style_choices
+  - id: STRUCTURE-TEMPLATE-ENDCAP
+    category: structure
+    action: remove_summary_or_faq_when_it_only_completes_a_template
+  - id: STRUCTURE-PARAGRAPH-UNIFORMITY
+    category: structure
+    action: allocate_paragraph_depth_by_information_value
+  - id: CONTENT-ABSTRACT-BENEFIT-DENSITY
+    category: content_quality
+    action: replace_stacked_benefit_verbs_with_supported_mechanisms_and_conditions

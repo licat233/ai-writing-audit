@@ -6,3 +6,9 @@ rules:
     source: {project: blader/humanizer, repository: https://github.com/blader/humanizer, upstream_rule: formatting, license: MIT, commit: 523374dee72d67c7b2b5f858ea0094ffda49c3ac, adapted: true}
   - id: CONTENT-GENERIC-CLAIM
     source: {project: native, repository: local, upstream_rule: semantic-quality, license: MIT, commit: local, adapted: false}
+  - id: STRUCTURE-TEMPLATE-ENDCAP
+    source: {project: native, repository: local, upstream_rule: whole-article-predictability, license: MIT, commit: local, adapted: false}
+  - id: STRUCTURE-PARAGRAPH-UNIFORMITY
+    source: {project: native, repository: local, upstream_rule: asymmetric-information-depth, license: MIT, commit: local, adapted: false}
+  - id: CONTENT-ABSTRACT-BENEFIT-DENSITY
+    source: {project: native, repository: local, upstream_rule: benefit-mechanism-gap, license: MIT, commit: local, adapted: false}

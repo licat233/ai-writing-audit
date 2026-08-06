@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline Phase 1 audit CLI. Standard library only."""
+"""Offline AI-style audit CLI. Standard library only."""
 from __future__ import annotations
 
 import argparse
@@ -27,7 +27,7 @@ EN_PATTERNS = [
 ]
 
 ZH_PATTERNS = [
-    ("LANGUAGE-AI-VOCABULARY-CLUSTER", r"(?:在当今快速发展的时代|值得一提的是|不可忽视的是|总而言之|综上所述|注入新的活力|开启新的篇章|构建[^。！？]{0,12}新格局|助力|赋能)", "language", "low", "moderate", "needs_specificity", "This is a common Chinese template or abstract value phrase; a single hit is not conclusive.", "Check density and replace with the specific object, action, or result where needed.", "native;blader/humanizer"),
+    ("LANGUAGE-AI-VOCABULARY-CLUSTER", r"(?:在当今快速发展的时代|随着[^。！？]{0,24}的不断发展|值得一提的是|不可忽视的是|不可否认|正如前面所说|总而言之|综上所述|双刃剑|深远影响|注入新的活力|开启新的篇章|构建[^。！？]{0,12}新格局|极大地提升|提供了出色的体验|助力|赋能)", "language", "low", "moderate", "needs_specificity", "This is a common Chinese template or abstract value phrase; a single hit is not conclusive.", "Check density and replace with the specific object, action, or result where needed.", "native;blader/humanizer"),
     ("CONTENT-EVIDENCE-GAP", r"(?:数据显示|研究表明|业内人士认为)", "evidence", "high", "moderate", "needs_source", "The statement invokes data or an authority without identifying it.", "Add a verifiable source, date, and scope, or qualify the claim.", "native"),
     ("STRUCTURE-MECHANICAL-SECTIONS", r"(?:首先|其次|最后)[，,]", "structure", "low", "moderate", "style_choice", "Repeated ordinal transitions can make sections feel mechanically generated.", "Keep them when they reflect real sequencing; otherwise use meaningful transitions.", "native"),
 ]
@@ -108,6 +108,59 @@ def armor_fact_findings(text: str, facts: list[str], protected: list[tuple[int, 
     return findings
 
 
+def structural_findings(text: str, language: str, protected: list[tuple[int, int]]) -> list[Finding]:
+    """Detect whole-article predictability that word-list scans cannot capture."""
+    findings: list[Finding] = []
+    endcap = re.compile(r"(?im)^#{1,6}\s*(?:总结|结论|常见问题(?:解答)?|FAQ|Summary|Conclusion|Frequently Asked Questions)\s*$")
+    for match in endcap.finditer(text):
+        findings.append(Finding(
+            "STRUCTURE-TEMPLATE-ENDCAP", "local-static-scanner", "structure", "low", "high",
+            match.group(0).strip(), match.start(), match.end(),
+            "A labeled summary, conclusion, or FAQ can become a predictable end-cap when it repeats the article or exists only for template completeness.",
+            "Keep it only when the reader or page purpose needs it; otherwise end with the decision, implication, or next action.",
+            "style_choice", ("native",), is_protected(match.start(), match.end(), protected),
+        ))
+
+    blocks = []
+    for match in re.finditer(r"(?ms)(?:^|\n\s*\n)([^\n].*?)(?=\n\s*\n|\Z)", text):
+        raw = match.group(1).strip()
+        if not raw or raw.startswith(("#", ">", "```", "|", "- ", "* ")):
+            continue
+        start = match.start(1)
+        end = match.end(1)
+        if is_protected(start, end, protected):
+            continue
+        size = len(re.findall(r"[\u4e00-\u9fff]", raw)) if language == "zh" else len(re.findall(r"\b\w+\b", raw))
+        if size >= (30 if language == "zh" else 20):
+            blocks.append((start, end, size, raw))
+    if len(blocks) >= 4:
+        sizes = [item[2] for item in blocks]
+        mean = sum(sizes) / len(sizes)
+        deviation = (sum((size - mean) ** 2 for size in sizes) / len(sizes)) ** 0.5
+        if mean and deviation / mean <= 0.14:
+            evidence = f"{len(blocks)} similarly sized paragraphs ({min(sizes)}–{max(sizes)} {'characters' if language == 'zh' else 'words'})"
+            findings.append(Finding(
+                "STRUCTURE-PARAGRAPH-UNIFORMITY", "local-static-scanner", "structure", "medium", "moderate",
+                evidence, blocks[0][0], blocks[-1][1],
+                "Paragraphs have unusually uniform length, which can reflect padded, parallel generation rather than information-led development.",
+                "Let important mechanisms or trade-offs run longer and compress secondary points; do not vary length mechanically.",
+                "style_choice", ("native",), False,
+            ))
+
+    density_terms = r"(?:提升|促进|推动|助力|赋能|优化|实现|打造|构建)" if language == "zh" else r"\b(?:improve|enhance|enable|empower|optimize|transform|streamline|drive)\w*\b"
+    for start, end, _, raw in blocks:
+        matches = re.findall(density_terms, raw, re.I)
+        if len(matches) >= 3:
+            findings.append(Finding(
+                "CONTENT-ABSTRACT-BENEFIT-DENSITY", "local-static-scanner", "content_quality", "medium", "moderate",
+                raw[:220], start, end,
+                "The paragraph stacks benefit verbs without enough concrete mechanism, object, condition, or trade-off.",
+                "Keep the strongest supported benefit and connect it to a specific action, mechanism, condition, or source.",
+                "needs_specificity", ("native",), False,
+            ))
+    return findings
+
+
 def protected_spans(text: str) -> list[tuple[int, int]]:
     spans = []
     for pattern in (r"(?ms)^---\n.*?\n---\n", r"(?ms)```.*?```", r"(?m)^>.*$", r"(?ms)(?m)^\|.*(?:\n\|.*)+"):
@@ -138,6 +191,7 @@ def scan_text(text: str, context: AuditContext) -> list[Finding]:
             findings.append(Finding(rule_id, "local-static-scanner", category, severity, confidence, evidence, match.start(), match.end(), diagnosis, action, repair_type, tuple(sources.split(";")), is_protected(match.start(), match.end(), protected)))
     for profile_id in context.profile_ids:
         findings.extend(armor_fact_findings(text, load_profile_facts(profile_id), protected))
+    findings.extend(structural_findings(text, language, protected))
     return findings
 
 
@@ -188,7 +242,7 @@ def report(text: str, mode: str, language: str, profiles: list[str], findings: l
         d.pop("start_offset", None); d.pop("end_offset", None); d.pop("protected", None)
         d["supported_by"] = [{"source": s} for s in f.upstream_sources]
         output.append(d)
-    return {"schema_version": 1, "tool_version": "0.1.0", "mode": mode, "language": detect_language(text) if language == "auto" else language, "profiles": profiles, "risk": {"level": level, "dimensions": dimensions, "interpretation": "AI-style writing risk, not authorship probability."}, "adapter_status": status, "findings": output, "limitations": ["Deterministic Phase 1 scan; semantic repetition and nuanced context require agent review."], "provenance": {"lock_file": "upstream/upstream-lock.yaml"}}
+    return {"schema_version": 1, "tool_version": "0.2.0", "mode": mode, "language": detect_language(text) if language == "auto" else language, "profiles": profiles, "risk": {"level": level, "dimensions": dimensions, "interpretation": "AI-style writing risk, not authorship probability."}, "adapter_status": status, "findings": output, "limitations": ["Deterministic scan; semantic reasoning, voice reconstruction, and full repair require the Agent workflow in SKILL.md."], "provenance": {"lock_file": "upstream/upstream-lock.yaml"}}
 
 
 def markdown(r: dict) -> str:

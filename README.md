@@ -1,17 +1,17 @@
 # ai-writing-audit
 
-`ai-writing-audit` is a source-traceable local orchestration skill for detecting writing patterns that may create an AI-generated impression. It combines normalized local rules with provenance from established open-source projects and produces Markdown or JSON reports.
+`ai-writing-audit` is a source-traceable local orchestration skill for detecting and repairing writing patterns that may create an AI-generated impression. It combines deterministic structural scanning with an agent-led, fact-preserving full-article rewrite workflow.
 
 It measures AI-style writing risk. It does not determine who or what authored a text, and it does not output an AI-generation probability.
 
-Phase 1 is offline and detect-first:
+The CLI performs an offline deterministic audit. Full repair is performed by the Agent using `SKILL.md` and `references/native-optimization.md`:
 
 ```bash
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --mode detect --language auto --profile general --format markdown
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --format json --output report.json
 ```
 
-The scanner does not upload article content, does not modify the input by default, and treats quoted/code/table/front-matter text as protected.
+The scanner detects template openings and endings, abstract benefit density, uniform paragraph structure, formulaic language, evidence gaps, and selected domain risks. It does not upload article content, does not modify the input by default, and treats quoted/code/table/front-matter text as protected.
 
 The same folder can be installed as a Skill in Codex, Claude Code, or Hermes Agent. The runtime only needs Python 3.9+ and the standard library.
 
@@ -24,7 +24,7 @@ Use $ai-writing-audit to fully polish this article.
 First audit it, then rewrite the complete article so it is more specific, coherent, natural, and consistent with the supplied facts and intended audience. Preserve quotes, code, tables, terminology, and factual limits. Do not invent data or personal experience. Return the diagnosis, the complete revised article, a change log, unresolved fact gaps, and a post-repair audit.
 ```
 
-The repair workflow is not a synonym for “make it undetectable.” It improves editorial quality and reduces formulaic patterns while preserving truth, constraints, and the author's intended register. See [`references/native-optimization.md`](references/native-optimization.md) for the full method.
+The repair workflow is not a synonym for “make it undetectable.” It improves editorial quality and reduces formulaic patterns while preserving truth, constraints, and the author's intended register. First-person experience, field details, dialogue, humor, and data are used only when supplied or attributable; the Agent must not invent them. See [`references/native-optimization.md`](references/native-optimization.md) for the full method.
 
 ## Installation
 
