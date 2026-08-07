@@ -1,2 +1,2 @@
 id: professional
-exceptions: [formal-register, passive-voice]
+description: Base deterministic scan for professional prose.

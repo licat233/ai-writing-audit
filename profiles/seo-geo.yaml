@@ -1,2 +1,3 @@
 id: seo-geo
 focus: [keyword-repetition, faq-template, pseudo-facts, answer-template]
+weights: {template_language: 1.2, structural_uniformity: 1.4}

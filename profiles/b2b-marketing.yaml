@@ -1,2 +1,3 @@
 id: b2b-marketing
 focus: [generic-benefits, unsupported-roi, missing-mechanism, exaggerated-claims]
+weights: {generic_claims: 1.4, evidence_deficiency: 1.2}

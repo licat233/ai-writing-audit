@@ -4,14 +4,16 @@
 
 It measures AI-style writing risk. It does not determine who or what authored a text, and it does not output an AI-generation probability.
 
-The CLI performs an offline deterministic audit. Full repair is performed by the Agent using `SKILL.md` and `references/native-optimization.md`:
+The v0.3 CLI performs an offline deterministic audit. Full repair is performed by the Agent using `SKILL.md` and `references/native-optimization.md`:
 
 ```bash
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --mode detect --language auto --profile general --format markdown
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --format json --output report.json
 ```
 
-The scanner detects template openings and endings, abstract benefit density, uniform paragraph structure, formulaic language, evidence gaps, and selected domain risks. It does not upload article content, does not modify the input by default, and treats quoted/code/table/front-matter text as protected.
+The scanner detects unsupported generic scene openings, template endings, answer-template repetition, abstract benefit density, uniform paragraph structure, formulaic language, evidence gaps, and selected domain risks. It does not upload or modify article content and treats quoted/code/table/front-matter text as protected. `repair`, `edit`, and `compare` return `unsupported_cli_mode`; they can never be mistaken for a completed repair.
+
+Each JSON report includes the input SHA-256, deterministic ruleset/config fingerprint, tool version, selected profile configuration, and stable finding IDs. Provenance-only upstream references are labeled `reference_only`, never `success`.
 
 The same folder can be installed as a Skill in Codex, Claude Code, or Hermes Agent. The runtime only needs Python 3.9+ and the standard library.
 

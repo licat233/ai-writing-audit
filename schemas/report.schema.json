@@ -1,1 +1,62 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["schema_version","tool_version","mode","language","profiles","risk","adapter_status","findings","limitations","provenance"],"properties":{"schema_version":{"const":1},"tool_version":{"type":"string"},"mode":{"enum":["detect","repair","edit","compare"]},"language":{"enum":["en","zh"]},"profiles":{"type":"array","items":{"type":"string"}},"risk":{"type":"object","required":["level","dimensions"],"properties":{"level":{"enum":["low","moderate","high","critical"]},"dimensions":{"type":"object"}}},"adapter_status":{"type":"object"},"findings":{"type":"array"},"limitations":{"type":"array","items":{"type":"string"}},"provenance":{"type":"object"}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tool_version",
+    "mode",
+    "language",
+    "profiles",
+    "profile_configuration",
+    "risk",
+    "adapter_status",
+    "findings",
+    "limitations",
+    "reproducibility",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "tool_version": {"const": "0.3.0"},
+    "mode": {"const": "detect"},
+    "language": {"enum": ["en", "zh"]},
+    "profiles": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "profile_configuration": {
+      "type": "object",
+      "required": ["focus", "exceptions", "protect", "weights"],
+      "properties": {
+        "focus": {"type": "array", "items": {"type": "string"}},
+        "exceptions": {"type": "array", "items": {"type": "string"}},
+        "protect": {"type": "array", "items": {"type": "string"}},
+        "weights": {"type": "object"}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["level", "score", "dimensions", "interpretation"],
+      "properties": {
+        "level": {"enum": ["low", "moderate", "high", "critical"]},
+        "score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "dimensions": {"type": "object"},
+        "interpretation": {"type": "string"}
+      }
+    },
+    "adapter_status": {"type": "object"},
+    "findings": {"type": "array", "items": {"$ref": "finding.schema.json"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "reproducibility": {
+      "type": "object",
+      "required": ["input_sha256", "ruleset_sha256", "stable_finding_ids"],
+      "properties": {
+        "input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "ruleset_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "stable_finding_ids": {"const": true}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["lock_file", "native_rule_file", "active_native_rules"]
+    }
+  }
+}

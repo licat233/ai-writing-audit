@@ -28,4 +28,4 @@ python3 -m unittest discover -s tests
 
 ## Next phase
 
-Implement adapter registry execution and explicit upstream sync/license verification, then add semantic audit findings and the larger regression corpus. The agent-led native full-repair workflow is now documented in `references/native-optimization.md`; deterministic file mutation remains disabled until a later phase.
+Historical note: v0.3.0 completed the larger deterministic regression corpus, executable Profile focus/weights, reproducibility fingerprints, stable finding IDs, and truthful `reference_only` adapter status. Upstream reference adapters still do not execute third-party code, and deterministic file mutation remains intentionally disabled; full repair is agent-led through `SKILL.md` and `references/native-optimization.md`.

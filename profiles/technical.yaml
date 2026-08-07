@@ -1,2 +1,2 @@
 id: technical
-protect: [technical-terms, parameters, definitions, api-names]
+description: Base deterministic scan; technical terminology remains protected by the agent workflow.

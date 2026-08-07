@@ -1,2 +1,2 @@
 id: academic
-protect: [citations, hedging, methods]
+description: Base deterministic scan; academic semantic exceptions remain agent-reviewed.

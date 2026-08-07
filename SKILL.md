@@ -4,7 +4,7 @@ description: Audit and fully polish Markdown or plain-text articles for AI-style
 license: MIT
 metadata:
   hermes:
-    version: 0.2.0
+    version: 0.3.0
     platforms: [macos, linux]
     tags: [writing, audit, ai-style, editing, chinese, english]
     related_skills: []
@@ -12,7 +12,7 @@ metadata:
 
 # AI Writing Audit
 
-Use this skill as a local audit orchestrator. It measures patterns that may make writing feel AI-generated; it does not determine who authored the text.
+Use this skill as a deterministic scanner plus an agent-led editorial workflow. It measures patterns that may make writing feel AI-generated; it does not determine who authored the text.
 
 ## Operating rules
 
@@ -29,13 +29,13 @@ Use this skill as a local audit orchestrator. It measures patterns that may make
 ## Workflow
 
 1. Identify the input file or text, language (`auto`, `en`, `zh`), mode, and profiles. Use `general` unless context indicates `professional`, `technical`, `academic`, `b2b-marketing`, `seo-geo`, or `armor`.
-2. For file input, run the local CLI from this skill directory:
+2. For file input, run the local CLI from this skill directory. The CLI implements `detect` only:
 
    ```bash
    python3 /path/to/ai-writing-audit/scripts/audit.py ARTICLE.md --mode detect --language auto --profile general --format markdown
    ```
 
-   Resolve `/path/to/ai-writing-audit` as the directory containing this `SKILL.md`; do not assume the agent's current working directory. Use `--format json` for machine-readable output, `--strict` for non-zero exit on findings, and `--output PATH` to save a report.
+   Resolve `/path/to/ai-writing-audit` as the directory containing this `SKILL.md`; do not assume the agent's current working directory. Use `--format json` for machine-readable output, `--strict` for non-zero exit on findings, and `--output PATH` to save a report. CLI modes `repair`, `edit`, and `compare` deliberately fail with `unsupported_cli_mode`; they never silently behave as detection.
 3. Explain the overall risk as an editorial risk assessment, then prioritize findings by factual/evidence risk, whole-article predictability, semantic quality, and only then weak word or punctuation signals.
 4. For a repair request, read `references/native-optimization.md` completely and follow the full repair loop: extract facts and voice, choose a supported opening angle, rebuild the argument, rewrite the complete article, run the same audit again, and report unresolved evidence gaps. Do not claim that a repair makes text “undetectable.”
 5. If the CLI is unavailable or an optional adapter is missing, report the limitation explicitly and continue with local scanning.
@@ -51,11 +51,11 @@ Use this skill as a local audit orchestrator. It measures patterns that may make
 
 ## Profiles
 
-Profiles adjust weights and exceptions; they do not replace the base rules. Read `profiles/<name>.yaml` when a profile is selected. The `armor` profile additionally enables the ARMOR domain facts listed in `profiles/armor.yaml` (e.g. `esl-is-not-lcd`, `no-unsupported-zero-install-cost-or-roi`); these produce `ARMOR-FACT-*` findings with repair type `factual_conflict`, `unsupported_claim`, or `needs_domain_review`, and a `facts`-category finding raises the overall risk to at least `high`. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
+Profiles are executable configuration, not labels. `b2b-marketing` enables missing-mechanism and generic-benefit checks plus risk weights; `seo-geo` enables keyword repetition, answer-template, FAQ, and categorical-claim checks plus weights; `armor` enables the domain facts in `profiles/armor.yaml`. General, professional, academic, and technical currently share the base deterministic scanner; their semantic genre exceptions remain agent-reviewed and are not presented as CLI capabilities. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
 
 ## Output contract
 
-Every finding should include a normalized rule ID, category, severity, confidence, location when available, evidence, diagnosis, recommended action, repair type, and provenance. The JSON report must validate against `schemas/report.schema.json`.
+Every finding should include a normalized rule ID, category, severity, confidence, location when available, evidence, diagnosis, recommended action, repair type, and provenance. The JSON report must validate against `schemas/report.schema.json`. Record `tool_version`, `input_sha256`, `ruleset_sha256`, selected profiles, and stable finding IDs with every production audit. An adapter may report `success` only when its code actually executed; provenance-only sources report `reference_only`.
 
 The score is an editorial risk score, not the probability that AI authored the text. Mention limitations when the document is short, highly technical, heavily quoted, or lacks enough context.
 
