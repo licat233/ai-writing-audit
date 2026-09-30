@@ -21,6 +21,7 @@ Use this skill as a deterministic scanner plus an agent-led editorial workflow. 
 - Do not upload article content or fetch GitHub during an audit. Use the locked local sources and rules.
 - Preserve quotations, blockquotes, code, inline code, tables, YAML front matter, HTML attributes, legal text, and attributed third-party text. Report protected findings but do not rewrite them.
 - Never invent facts, numbers, sources, cases, product capabilities, or personal experience.
+- Do not bundle company-specific facts, brand rules, product constraints, or private editorial policies. Those belong in downstream integrations or private overlays supplied by the user or organization.
 - Report `low`, `moderate`, `high`, or `critical` AI-style risk only. Never report authorship probability.
 - Treat a deterministic `PASS`/`low` result as a scan outcome, never as approval to publish. Human editorial gates in `references/native-optimization.md` still apply: a clean scanner does not prove human authorship, editorial quality, or repaired structure.
 - Prefer concrete evidence and a small number of actionable findings over a long list of weak signals.
@@ -31,7 +32,7 @@ Use this skill as a deterministic scanner plus an agent-led editorial workflow. 
 
 ## Workflow
 
-1. Identify the input file or text, language (`auto`, `en`, `zh`), mode, and profiles. Use `general` unless context indicates `professional`, `technical`, `academic`, `b2b-marketing`, `seo-geo`, or `armor`.
+1. Identify the input file or text, language (`auto`, `en`, `zh`), mode, and profiles. Use `general` unless context indicates `professional`, `technical`, `academic`, `b2b-marketing`, or `seo-geo`.
 2. For file input, run the local CLI from this skill directory. The CLI implements `detect` only:
 
    ```bash
@@ -54,7 +55,7 @@ Use this skill as a deterministic scanner plus an agent-led editorial workflow. 
 
 ## Profiles
 
-Profiles are executable configuration, not labels. `b2b-marketing` enables missing-mechanism and generic-benefit checks plus risk weights; `seo-geo` enables keyword repetition, answer-template, FAQ, and categorical-claim checks plus weights; `armor` enables the domain facts in `profiles/armor.yaml`. General, professional, academic, and technical currently share the base deterministic scanner; their semantic genre exceptions remain agent-reviewed and are not presented as CLI capabilities. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
+Profiles are executable configuration, not labels. `b2b-marketing` enables missing-mechanism and generic-benefit checks plus risk weights; `seo-geo` enables keyword repetition, answer-template, FAQ, and categorical-claim checks plus weights. General, professional, academic, and technical currently share the base deterministic scanner; their semantic genre exceptions remain agent-reviewed and are not presented as CLI capabilities. For detailed output semantics, read `references/audit-framework.md` and `references/repair-policy.md`.
 
 ## Output contract
 
