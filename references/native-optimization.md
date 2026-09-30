@@ -78,7 +78,7 @@ One specific judgment is more credible than scattered conversational fillers. Pr
 - Do not turn a technical or academic document into casual marketing copy.
 - Do not delete a limitation merely because it reduces persuasion.
 - Keep brand names, API names, units, formulas, and quoted text unchanged unless the user explicitly authorizes a correction.
-- In ARMOR work, apply `profiles/armor.yaml` and treat unresolved product claims as review items.
+- Treat organization-specific brand facts, product constraints, legal rules, and private editorial policies as external inputs. Do not hard-code them into this public skill.
 
 ## 6. No-AI-slop editorial gates
 
