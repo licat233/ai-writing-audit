@@ -25,3 +25,13 @@ sources:
     homepage: https://github.com/gabelul/slopbuster
     integration: optional-cli
     required: false
+  - id: petergyang-no-ai-slop
+    repository: petergyang/no-ai-slop
+    homepage: https://github.com/petergyang/no-ai-slop
+    integration: rules-reference
+    required: false
+  - id: hardikpandya-stop-slop
+    repository: hardikpandya/stop-slop
+    homepage: https://github.com/hardikpandya/stop-slop
+    integration: evaluated-reference
+    required: false

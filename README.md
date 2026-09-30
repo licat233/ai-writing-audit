@@ -11,7 +11,7 @@ python3 /path/to/ai-writing-audit/scripts/audit.py article.md --mode detect --la
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --format json --output report.json
 ```
 
-The scanner detects unsupported generic scene openings, template endings, answer-template repetition, abstract benefit density, uniform paragraph structure, formulaic language, evidence gaps, and selected domain risks. It does not upload or modify article content and treats quoted/code/table/front-matter text as protected. `repair`, `edit`, and `compare` return `unsupported_cli_mode`; they can never be mistaken for a completed repair.
+The scanner detects unsupported generic scene openings, template endings, answer-template repetition, abstract benefit density, uniform paragraph structure, formulaic language, evidence gaps, and selected domain risks. v0.3.1 adds conservative editorial-structure signals: lexical overlap between the introduction and the first headed section, unsupported generalized buyer/shopper behavior, article roadmap/list-count phrasing, and 4+ parallel H3 spec-tour sequences (profile-gated). Keyword density excludes YAML front matter and JSON-LD/schema comments so metadata cannot inflate repetition scores. It does not upload or modify article content and treats quoted/code/table/front-matter text as protected. `repair`, `edit`, and `compare` return `unsupported_cli_mode`; they can never be mistaken for a completed repair.
 
 Each JSON report includes the input SHA-256, deterministic ruleset/config fingerprint, tool version, selected profile configuration, and stable finding IDs. Provenance-only upstream references are labeled `reference_only`, never `success`.
 
@@ -99,3 +99,14 @@ python3 /Users/licat/.codex/skills/.system/skill-creator/scripts/quick_validate.
 ```
 
 If the second command is unavailable outside Codex, the CLI test and the first command are sufficient for Claude Code and Hermes Agent. Use the installed directory in place of the example path.
+
+## Local regression
+
+The `tests/test_audit.py::LocalRegressionTests` class audits two local rewrite fixtures when they are present and skips otherwise. Run the same check manually with:
+
+```bash
+python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index.md --profile b2b-marketing,seo-geo,armor --format json   # must NOT be low/clean
+python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index-v3.md --profile b2b-marketing,seo-geo,armor --format json  # must stay low
+```
+
+A deterministic `low`/`PASS` result is a scan outcome, not an approval to publish: the human editorial gates in `references/native-optimization.md` still apply.

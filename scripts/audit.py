@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 from adapters.base import AuditContext, Finding
 
 
-TOOL_VERSION = "0.3.0"
+TOOL_VERSION = "0.4.0"
 SEVERITY_VALUE = {"low": 25, "medium": 50, "high": 75, "critical": 100}
 DIMENSIONS = (
     "template_language",
@@ -43,11 +43,18 @@ EN_PATTERNS = [
     ("CHATBOT-ARTIFACT", r"\b(?:I hope this helps|let me know if you(?:'d| would) like|as an AI language model)\b", "chatbot_artifact", "high", "high", "language_fix", "The sentence resembles assistant residue rather than article prose.", "Remove it or replace it with article-specific content.", "conorbronsdon/avoid-ai-writing"),
     ("CONTENT-GENERIC-CLAIM", r"\b(?:innovative|seamless|game-changing|revolutionary|significantly improves|plays a vital role|in today's rapidly changing world)\b", "content_quality", "medium", "moderate", "needs_specificity", "The wording makes a broad value claim without a mechanism, condition, or evidence.", "Name what changes, how it changes, and under what conditions.", "native;blader/humanizer"),
     ("CONTENT-EVIDENCE-GAP", r"\b(?:studies show|research shows|data shows)\b", "evidence", "high", "moderate", "needs_source", "The attribution is vague and does not identify a verifiable source.", "Add the real source and scope, or qualify/remove the claim.", "native"),
+    ("STYLE-THROAT-CLEARING", r"\b(?:here(?:'|’)s the thing|here is the thing|let me be clear|i(?:'|’)ll be honest|the uncomfortable truth is)\b", "language", "low", "high", "language_fix", "The phrase delays the point with a stock setup.", "State the supported point directly unless the setup carries real voice or context.", "petergyang/no-ai-slop"),
+    ("STYLE-FAUX-INSIGHT", r"\b(?:what most people (?:miss|get wrong)|what nobody tells you|the part (?:everyone|most people) (?:miss|skip))\b", "language", "medium", "high", "language_fix", "The setup performs exclusivity instead of supplying evidence.", "Remove the setup and let the concrete claim or evidence carry the insight.", "petergyang/no-ai-slop"),
+    ("STYLE-IMPORTANCE-PUFFERY", r"\b(?:stands? as a testament|marks? a pivotal moment|solidif(?:y|ies) its position|underscores? its significance)\b", "content_quality", "medium", "high", "needs_specificity", "The sentence labels importance instead of showing the concrete consequence.", "State the event, mechanism, result, or limitation and let the reader judge its importance.", "petergyang/no-ai-slop"),
+    ("STYLE-INTERPRETIVE-METADISCOURSE", r"\b(?:the key point is|as you can see|that last part matters more than it sounds|this distinction matters)\b", "language", "low", "high", "language_fix", "The prose tells the reader how to interpret a point instead of strengthening the point itself.", "Delete the aside when the point is already clear, or replace it with supporting detail.", "petergyang/no-ai-slop"),
+    ("EVIDENCE-WEASEL-ATTRIBUTION", r"\b(?:experts agree|industry reports suggest|many argue|widely regarded as)\b", "evidence", "high", "high", "needs_source", "The claim invokes unnamed authority.", "Name the source and scope, or remove/qualify the attribution.", "petergyang/no-ai-slop"),
 ]
 
 ZH_PATTERNS = [
     ("LANGUAGE-AI-VOCABULARY-CLUSTER", r"(?:在当今快速发展的时代|随着[^。！？]{0,24}的不断发展|值得一提的是|不可忽视的是|不可否认|正如前面所说|总而言之|综上所述|双刃剑|深远影响|注入新的活力|开启新的篇章|构建[^。！？]{0,12}新格局|极大地提升|提供了出色的体验|助力|赋能)", "language", "low", "moderate", "needs_specificity", "This is a common Chinese template or abstract value phrase; a single hit is not conclusive.", "Replace it with the specific object, action, result, or limitation where evidence permits.", "native;blader/humanizer"),
     ("CONTENT-EVIDENCE-GAP", r"(?:数据显示|研究表明|业内人士认为)", "evidence", "high", "moderate", "needs_source", "The statement invokes data or authority without identifying it.", "Add a verifiable source, date, and scope, or qualify the claim.", "native"),
+    ("STYLE-FAUX-INSIGHT", r"(?:很多人忽略的是|很少有人意识到|大多数人没(?:有)?注意到|真正被忽略的是)", "language", "medium", "high", "language_fix", "The setup presents the writer as seeing what others miss without adding evidence.", "Remove the setup and state the supported observation directly.", "petergyang/no-ai-slop;native-zh"),
+    ("EVIDENCE-WEASEL-ATTRIBUTION", r"(?:专家(?:普遍)?认为|业内普遍认为|业界普遍认为)", "evidence", "high", "high", "needs_source", "The statement invokes unnamed authority or consensus.", "Name a verifiable source and scope, or remove/qualify the attribution.", "petergyang/no-ai-slop;native-zh"),
     ("STRUCTURE-MECHANICAL-SECTIONS", r"(?:首先|其次|最后)[，,]", "structure", "low", "moderate", "style_choice", "Repeated ordinal transitions can make sections feel mechanically generated.", "Keep them only when they reflect a real sequence.", "native"),
 ]
 
@@ -58,6 +65,44 @@ ARMOR_FACT_RULES = {
     "no-unsupported-zero-install-cost-or-roi": ("ARMOR-FACT-UNSUPPORTED-ZERO-INSTALL-ROI", r"\b(?:zero|no|free)\s+install(?:ation)?\s+cost\b|\bROI\b[^.!?]{0,40}\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*%\s+ROI\b", "facts", "high", "moderate", "unsupported_claim", "The copy states zero install cost or a specific ROI figure without a supporting source.", "Add verified case data or qualify/remove the claim.", "armor-product-knowledge"),
     "verify-voltage-and-connection": ("ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION", r"\b\d{2,4}\s*[Vv]\b", "facts", "medium", "low", "needs_domain_review", "The copy gives a specific voltage or connection value that requires product verification.", "Verify it against product documentation or mark it for review.", "armor-product-knowledge"),
 }
+
+
+SPEC_TOUR_PROFILES = {"b2b-marketing", "seo-geo", "armor"}
+AUDIENCE_BEHAVIOR_RE = re.compile(
+    r"\b(?:"
+    r"(?:the|a|every|any) (?:shopper|buyer|customer)'?s? (?:decision|choice|attention|instinct|hand|eye) (?:happens|takes place|is (?:made|decided))"
+    r"|(?:buyers|shoppers|customers) (?:most commonly|almost always|usually|typically|always|never|tend to|care (?:most about|about)|look for|reach for|scan|judge|prefer|expect|notice|forget|overlook)"
+    r"|most (?:buyers|shoppers|customers)"
+    r"|(?:the|every|any) (?:shopper|buyer|customer) (?:looks|reaches|scans|expects|decides|notices|judges|prefers|forgets)"
+    r")\b",
+    re.IGNORECASE,
+)
+AUDIENCE_ATTRIBUTION_SKIP_RE = re.compile(
+    r"\b(?:according to|research|survey|stud(?:y|ies)|data|report(?:ed|s|ing)? by|source|statista|nielsen|gartner|"
+    r"in our experience|we found|customers? (?:told|reported|said)|user research|behavioral research|field research)\b",
+    re.IGNORECASE,
+)
+ROADMAP_RE = re.compile(
+    r"\b(?:"
+    r"this (?:article|guide|post|piece|document|page) (?:covers|explains|will cover|will explain|walks? (?:you )?through|takes? you through|discusses|outlines|includes|details|breaks? down)"
+    r"|(?:in|throughout) this (?:article|guide|post|piece|document)"
+    r"|(?:is|are|involves?|breaks? down into|divides? into) (?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\d+) (?:separate|distinct|main|key|different)? (?:jobs|parts|sections|steps|tasks|layers|things|decisions|specs|dimensions|stages)"
+    r")\b",
+    re.IGNORECASE,
+)
+SPEC_H3_TITLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 /&.,'()-]{0,40}:\s+\S")
+TECH_REF_H2_RE = re.compile(r"\b(?:api|endpoint|syntax|reference|parameters?|configuration)\b", re.IGNORECASE)
+TECH_H3_RE = re.compile(r"^(?:GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+|\(\)$|(?:/\w+)+(?:\s|$)", re.IGNORECASE)
+# Lexical overlap between the introduction and the first headed section must be
+# substantial before it is reported; a Jaccard score below this stays silent.
+INTRO_SECTION_OVERLAP_THRESHOLD = 0.15
+EN_STOPWORDS = frozenset(
+    "a an and or but if then else for of in on to from at by with is are was were be been being "
+    "it its this that these those as has have had do does did will would can could should may might "
+    "must not no so too very just more most less each every any all some none your you your their "
+    "there they them we our us i my me he she his her who what which while when where why how the s t d"
+    "".split()
+)
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -123,13 +168,253 @@ def ruleset_fingerprint() -> str:
 
 def protected_spans(text: str) -> list[tuple[int, int]]:
     spans = []
-    for pattern in (r"(?ms)^---\n.*?\n---\n", r"(?ms)```.*?```", r"(?m)^>.*$", r"(?ms)(?m)^\|.*(?:\n\|.*)+"):
+    # YAML front matter, fenced code, blockquotes, tables, and HTML/schema comments
+    # are non-prose regions: they are reported as protected and excluded from
+    # prose-derived metrics such as keyword density.
+    for pattern in (r"(?ms)^---\n.*?\n---\n", r"(?ms)```.*?```", r"(?m)^>.*$", r"(?ms)(?m)^\|.*(?:\n\|.*)+", r"(?ms)<!--.*?-->"):
         spans.extend((m.start(), m.end()) for m in re.finditer(pattern, text))
     return sorted(spans)
 
 
 def is_protected(start: int, end: int, spans: Iterable[tuple[int, int]]) -> bool:
     return any(start < b and end > a for a, b in spans)
+
+
+def mask_protected(text: str, spans: Iterable[tuple[int, int]]) -> str:
+    """Return a copy of *text* with protected spans replaced by spaces.
+
+    The output keeps the original length so offsets derived from the unmasked
+    text stay valid; only the words available to prose metrics change.
+    """
+    if not spans:
+        return text
+    chars = list(text)
+    for a, b in spans:
+        for i in range(max(a, 0), min(b, len(text))):
+            chars[i] = " "
+    return "".join(chars)
+
+
+def body_after_frontmatter(text: str) -> tuple[str, int]:
+    """Return (body_without_frontmatter, absolute_body_start)."""
+    body_match = re.match(r"(?s)^\s*---\s*\n.*?\n---\s*\n(.*)$", text)
+    if body_match:
+        return body_match.group(1), body_match.start(1)
+    return text, 0
+
+
+def prose_paragraph_spans(text: str, protected: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Absolute spans of prose paragraphs (headings, lists, and protected regions excluded)."""
+    body, body_start = body_after_frontmatter(text)
+    spans = []
+    for match in re.finditer(r"(?ms)(?:^|\n\s*\n)([^\n].*?)(?=\n\s*\n|\Z)", body):
+        raw = match.group(1).strip()
+        if not raw or raw.startswith(("#", ">", "```", "|", "- ", "* ", "<!--")):
+            continue
+        start = body_start + match.start(1)
+        end = body_start + match.end(1)
+        if is_protected(start, end, protected):
+            continue
+        spans.append((start, end))
+    return spans
+
+
+def sentence_spans(text: str, start: int, end: int) -> list[tuple[int, int]]:
+    """Approximate sentence spans within [start, end), trimmed of leading space."""
+    spans = []
+    for match in re.finditer(r"[^.!?\n]+[.!?]?", text[start:end]):
+        s = start + match.start()
+        e = start + match.end()
+        while s < e and text[s] in " \t":
+            s += 1
+        spans.append((s, e))
+    return spans
+
+
+def _sentence_tokens(sentence: str) -> list[str]:
+    return [word.lower() for word in re.findall(r"\b[a-z][a-z0-9'-]*\b", sentence)]
+
+
+def content_words(text: str) -> set[str]:
+    """Significant English content words in *text* (stopwords and fragments removed)."""
+    return {
+        word
+        for word in re.findall(r"\b[a-z][a-z0-9'-]*\b", text.lower())
+        if word not in EN_STOPWORDS and len(word) > 1
+    }
+
+
+def enclosing_sentence(text: str, offset: int) -> tuple[int, int]:
+    """Approximate sentence span [start, end) containing *offset* in *text*."""
+    start = offset
+    while start > 0 and text[start - 1] not in ".!?\n。！？":
+        start -= 1
+    end = offset
+    while end < len(text) and text[end] not in ".!?\n。！？":
+        end += 1
+    if end < len(text) and text[end] in ".!?。！？":
+        end += 1
+    return start, end
+
+
+def intro_first_section_overlap(text: str, protected: list[tuple[int, int]]) -> tuple[float, int, int, str] | None:
+    """Return (jaccard, section_start, section_end, section_snippet) or None.
+
+    The introduction is the prose between the title and the first level-2+
+    heading; the first headed section is that heading's content. High overlap
+    means the article opens by repeating itself instead of advancing.
+    """
+    body, body_start = body_after_frontmatter(text)
+    masked_body = mask_protected(text, protected)[body_start:]
+    h1 = re.match(r"^#{1}\s+[^\n]*\n?", body)
+    start = h1.end() if h1 else 0
+    h2 = re.search(r"(?m)^#{2,6}\s+[^\n]*\n?", body[start:])
+    if not h2:
+        return None
+    intro = masked_body[start : start + h2.start()]
+    sec_start = start + h2.end()
+    nxt = re.search(r"(?m)^#{1,2}\s+", body[sec_start:])
+    sec_end = sec_start + (nxt.start() if nxt else len(body) - sec_start)
+    section = masked_body[sec_start:sec_end]
+    intro_words, section_words = content_words(intro), content_words(section)
+    if not intro_words or not section_words:
+        return None
+    shared_words = intro_words & section_words
+    if len(shared_words) < 5:
+        return None
+    ratio = len(shared_words) / len(intro_words | section_words)
+    return ratio, body_start + sec_start, body_start + sec_end, body[sec_start:sec_end].strip()[:220]
+
+
+def audience_behavior_findings(text: str, protected: list[tuple[int, int]]) -> list[Finding]:
+    results: list[Finding] = []
+    for match in AUDIENCE_BEHAVIOR_RE.finditer(text):
+        if is_protected(match.start(), match.end(), protected):
+            continue
+        sentence_start, sentence_end = enclosing_sentence(text, match.start())
+        if AUDIENCE_ATTRIBUTION_SKIP_RE.search(text[sentence_start:sentence_end]):
+            continue
+        results.append(
+            finding(
+                "EVIDENCE-UNSUPPORTED-AUDIENCE-BEHAVIOR",
+                "evidence",
+                "medium",
+                "moderate",
+                match.group(0).strip(),
+                sentence_start,
+                sentence_end,
+                "The copy generalizes about buyer or shopper behavior without a traceable source or scope.",
+                "Attribute the behavior to a source with a date and scope, or replace it with the specific decision or condition this article supports.",
+                "needs_source",
+                ("native",),
+            )
+        )
+    return results
+
+
+def roadmap_findings(text: str, protected: list[tuple[int, int]]) -> list[Finding]:
+    results: list[Finding] = []
+    for match in ROADMAP_RE.finditer(text):
+        if is_protected(match.start(), match.end(), protected):
+            continue
+        sentence_start, sentence_end = enclosing_sentence(text, match.start())
+        results.append(
+            finding(
+                "STRUCTURE-ROADMAP-LIST-COUNT",
+                "structure",
+                "low",
+                "moderate",
+                match.group(0).strip(),
+                sentence_start,
+                sentence_end,
+                "The copy announces the article's structure or counts its parts, a predictable template move.",
+                "Let the argument show the structure; cut the announcement unless the reader genuinely needs a map.",
+                "style_choice",
+                ("native",),
+            )
+        )
+    return results
+
+
+def spec_tour_findings(text: str, config: dict[str, Any], native_ids: set[str], protected: list[tuple[int, int]]) -> list[Finding]:
+    """Flag 4+ consecutive parallel H3 spec-tour sections.
+
+    Conservative: profile-gated to b2b-marketing/seo-geo/armor and skipped for
+    documents that read as technical references (API/endpoint/parameter pages).
+    """
+    if "STRUCTURE-SPEC-TOUR-SEQUENCE" not in native_ids or not SPEC_TOUR_PROFILES.intersection(config["loaded"]):
+        return []
+    headings = [
+        match
+        for match in re.finditer(r"(?m)^(#{1,6})\s+(.+)$", text)
+        if not is_protected(match.start(), match.end(), protected)
+    ]
+    h2_titles = [m.group(2) for m in headings if len(m.group(1)) == 2]
+    h3_titles = [m.group(2) for m in headings if len(m.group(1)) == 3]
+    if any(TECH_REF_H2_RE.search(title) for title in h2_titles) or any(TECH_H3_RE.search(title) for title in h3_titles):
+        return []
+    runs: list[list[re.Match[str]]] = []
+    current: list[re.Match[str]] = []
+    for match in headings:
+        level = len(match.group(1))
+        if level == 3 and SPEC_H3_TITLE_RE.match(match.group(2)):
+            current.append(match)
+        else:
+            if len(current) >= 4:
+                runs.append(current)
+            current = []
+    if len(current) >= 4:
+        runs.append(current)
+    results: list[Finding] = []
+    for run in runs:
+        titles = " | ".join(match.group(2).strip() for match in run)
+        results.append(
+            finding(
+                "STRUCTURE-SPEC-TOUR-SEQUENCE",
+                "structure",
+                "medium",
+                "high",
+                titles,
+                run[0].start(),
+                run[-1].end(),
+                "Four or more consecutive titled spec sections form a mechanical spec-tour.",
+                "Fold the specs into the argument or vary the section layout; keep a reference format only when the genre requires it.",
+                "style_choice",
+                ("native",),
+            )
+        )
+    return results
+
+
+def editorial_risk_findings(text: str, config: dict[str, Any], protected: list[tuple[int, int]], native_ids: set[str]) -> list[Finding]:
+    """Conservative v0.3.1 editorial-structure rules, source-traceable to native rules."""
+    results: list[Finding] = []
+    if "STRUCTURE-INTRO-SECTION-OVERLAP" in native_ids:
+        overlap = intro_first_section_overlap(text, protected)
+        if overlap and overlap[0] >= INTRO_SECTION_OVERLAP_THRESHOLD:
+            _, section_start, section_end, snippet = overlap
+            results.append(
+                finding(
+                    "STRUCTURE-INTRO-SECTION-OVERLAP",
+                    "structure",
+                    "medium",
+                    "moderate",
+                    snippet,
+                    section_start,
+                    section_end,
+                    "The introduction and the first headed section repeat the same claims and vocabulary rather than advancing the argument.",
+                    "Let the introduction frame the decision; open the first section with new information and remove duplicated claims.",
+                    "style_choice",
+                    ("native",),
+                )
+            )
+    if "EVIDENCE-UNSUPPORTED-AUDIENCE-BEHAVIOR" in native_ids:
+        results.extend(audience_behavior_findings(text, protected))
+    if "STRUCTURE-ROADMAP-LIST-COUNT" in native_ids:
+        results.extend(roadmap_findings(text, protected))
+    if "STRUCTURE-SPEC-TOUR-SEQUENCE" in native_ids:
+        results.extend(spec_tour_findings(text, config, native_ids, protected))
+    return results
 
 
 def detect_language(text: str) -> str:
@@ -201,8 +486,11 @@ def profile_findings(text: str, language: str, config: dict[str, Any], protected
         keyword_match = re.search(r"(?im)^seo_keywords:\s*[\"']?([^,\n\"']+)", text)
         if keyword_match:
             phrase = keyword_match.group(1).strip().lower()
-            words = re.findall(r"\b[\w'-]+\b", text.lower())
-            occurrences = len(re.findall(rf"\b{re.escape(phrase)}\b", text, re.I))
+            # Prose-only frequency/density: front matter and JSON-LD/schema
+            # comments are excluded so metadata keywords cannot inflate the count.
+            masked = mask_protected(text, protected)
+            words = re.findall(r"\b[\w'-]+\b", masked.lower())
+            occurrences = len(re.findall(rf"\b{re.escape(phrase)}\b", masked, re.I))
             density = occurrences * max(1, len(phrase.split())) / max(1, len(words)) * 100
             if occurrences >= 6 and density >= 1.5:
                 results.append(finding("SEO-KEYWORD-REPETITION", "language", "medium", "high", f"'{phrase}' appears {occurrences} times; token density {density:.2f}%", keyword_match.start(1), keyword_match.end(1), "The primary keyword is repeated often enough to shape the prose mechanically.", "Use natural variants only where they preserve meaning; do not optimize toward a density target.", "style_choice", ("profile:seo-geo",)))
@@ -244,6 +532,7 @@ def scan_text(text: str, context: AuditContext, profile_config: dict[str, Any] |
     results.extend(armor_fact_findings(text, config["facts"], protected))
     results.extend(structural_findings(text, language, protected, active_native_rule_ids()))
     results.extend(profile_findings(text, language, config, protected))
+    results.extend(editorial_risk_findings(text, config, protected, active_native_rule_ids()))
     return results
 
 
@@ -304,6 +593,7 @@ def adapter_status(disabled: list[str], local_enabled: bool) -> dict[str, dict[s
         "local-static-scanner": {"status": "success" if local_enabled else "disabled_by_user"},
         "conorbronsdon-avoid-ai-writing": {"status": "reference_only", "reason": "rules/provenance reference; no adapter code executed"},
         "blader-humanizer": {"status": "reference_only", "reason": "rules/provenance reference; no adapter code executed"},
+        "petergyang-no-ai-slop": {"status": "reference_only", "reason": "rules/editorial-gate provenance reference; no upstream code executed"},
         "harshaneel-humanize": {"status": "unavailable", "reason": "deferred adapter not enabled"},
         "aboudjem-humanizer-skill": {"status": "unavailable", "reason": "deferred adapter not enabled"},
         "gabelul-slopbuster": {"status": "unavailable", "reason": "optional CLI not installed"},

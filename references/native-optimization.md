@@ -80,7 +80,19 @@ One specific judgment is more credible than scattered conversational fillers. Pr
 - Keep brand names, API names, units, formulas, and quoted text unchanged unless the user explicitly authorizes a correction.
 - In ARMOR work, apply `profiles/armor.yaml` and treat unresolved product claims as review items.
 
-## 6. Post-repair gates
+## 6. No-AI-slop editorial gates
+
+Apply these as semantic editorial checks, not blanket regex bans:
+
+- **Portability test:** if a sentence could move unchanged to another company, product, market, or person, remove it or ground it in supplied facts, mechanisms, consequences, or judgment.
+- **Minimum effective edit:** do not rewrite a strong sentence merely to make the document more uniform. Preserve useful roughness, cadence, bluntness, humor, uncertainty, and deliberate asymmetry.
+- **No performed insight:** remove stock exclusivity setups, interpretive commentary, fake profundity, synonym cycling, and dramatic fragments when they add posture rather than information.
+- **Contextual formatting:** emoji, bold, bullets, short headings, and dashes are not inherently wrong. Keep them when the publication surface needs them; remove them when they decorate weak prose or create repetitive AI-like structure.
+- **Read-aloud gate:** final prose should sound natural when read to a sharp colleague while preserving the intended professional register.
+
+These gates are adapted from the editorial principles in petergyang/no-ai-slop and intentionally remain agent-reviewed where deterministic detection would create false positives.
+
+## 7. Post-repair gates
 
 After writing the full revision, check:
 
@@ -96,5 +108,11 @@ After writing the full revision, check:
 10. Section lengths and headings are not mechanically symmetrical unless the genre requires a reference layout.
 11. Any first-person experience, quotation, dialogue, humor, or field detail is attributable to supplied material.
 12. The ending completes a decision, implication, or next action instead of repeating a generic summary or attaching an unnecessary FAQ.
+13. The introduction does not lexically repeat the first headed section; open the first section with new information.
+14. No sentence asserts generalized buyer/shopper behavior without a traceable source and scope.
+15. No roadmap or list-count announcement (for example, “this article covers the four specs”) substitutes for the argument itself.
+16. Four or more parallel titled spec sections are folded into the argument or justified as a genuine reference layout, not generated as a spec-tour.
+
+A clean deterministic scan after repair is not sufficient: if any gate above still fails, rewrite again or mark the unresolved item visibly for confirmation.
 
 The target is a more specific, coherent, honest article with a recognizable editorial voice. It is not a promise to bypass Turnitin, ZeroGPT, or any other detector.

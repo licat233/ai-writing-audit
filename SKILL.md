@@ -4,7 +4,7 @@ description: Audit and fully polish Markdown or plain-text articles for AI-style
 license: MIT
 metadata:
   hermes:
-    version: 0.3.0
+    version: 0.4.0
     platforms: [macos, linux]
     tags: [writing, audit, ai-style, editing, chinese, english]
     related_skills: []
@@ -22,9 +22,12 @@ Use this skill as a deterministic scanner plus an agent-led editorial workflow. 
 - Preserve quotations, blockquotes, code, inline code, tables, YAML front matter, HTML attributes, legal text, and attributed third-party text. Report protected findings but do not rewrite them.
 - Never invent facts, numbers, sources, cases, product capabilities, or personal experience.
 - Report `low`, `moderate`, `high`, or `critical` AI-style risk only. Never report authorship probability.
+- Treat a deterministic `PASS`/`low` result as a scan outcome, never as approval to publish. Human editorial gates in `references/native-optimization.md` still apply: a clean scanner does not prove human authorship, editorial quality, or repaired structure.
 - Prefer concrete evidence and a small number of actionable findings over a long list of weak signals.
 - When the user requests润色、改写、humanize, or repair, do not stop at a diagnosis. Produce a complete revised article unless the user explicitly asks for suggestions only.
 - Optimize for credible authorship signals—specificity, judgment, constraints, concrete transitions, and varied rhythm—not detector evasion, random errors, or forced informality.
+- Apply the portability test during repair: if a sentence could move unchanged to another company, product, or person, cut it or replace it with supplied subject-specific detail.
+- Make the minimum effective edit. Leave strong human sentences alone; do not polish every paragraph into the same cadence or level of tidiness.
 
 ## Workflow
 
@@ -74,6 +77,9 @@ Never return only scattered sentence replacements when the user asked for a comp
 Before presenting the revision, silently run the post-repair gates in `references/native-optimization.md`. Rewrite again if the article still uses a template opening, interchangeable sections, repeated summary language, evenly padded paragraphs, or invented human details.
 
 ## Maintenance
+
+Composition/provenance: references/composition.md; exact upstream snapshots: upstream/upstream-lock.yaml.
+
 
 Do not update upstreams during an audit. An explicit maintainer update may use `python3 scripts/sync_upstreams.py --check` and then a single-source update workflow after license review. Read `references/security-policy.md` before handling any upstream content.
 

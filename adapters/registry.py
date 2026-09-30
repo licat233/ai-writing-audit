@@ -33,6 +33,7 @@ def default_adapters() -> list[object]:
         StaticAdapter(),
         UpstreamReferenceAdapter("conorbronsdon-avoid-ai-writing"),
         UpstreamReferenceAdapter("blader-humanizer"),
+        UpstreamReferenceAdapter("petergyang-no-ai-slop"),
         UpstreamReferenceAdapter("harshaneel-humanize", enabled=False),
         UpstreamReferenceAdapter("aboudjem-humanizer-skill", enabled=False),
         UpstreamReferenceAdapter("gabelul-slopbuster", enabled=False),

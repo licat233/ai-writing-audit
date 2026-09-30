@@ -8,12 +8,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "audit.py"
 FIXTURES = ROOT / "tests" / "fixtures"
+REGRESSION_DIR = Path("/private/tmp/armor-retail-rewrite.Bgsvyu")
+
+
+def invoke_path(path, *args, check=True):
+    return subprocess.run([sys.executable, "-B", str(CLI), str(path), *args], capture_output=True, text=True, check=check)
+
 
 def invoke(name, *args, check=True):
-    return subprocess.run([sys.executable, "-B", str(CLI), str(FIXTURES / name), *args], capture_output=True, text=True, check=check)
+    return invoke_path(FIXTURES / name, *args, check=check)
+
 
 def detect(name, profile="general"):
     return json.loads(invoke(name, "--profile", profile, "--format", "json").stdout)
+
+
+def audit_path(path, profile="general"):
+    return json.loads(invoke_path(path, "--profile", profile, "--format", "json").stdout)
+
 
 class AuditV03Tests(unittest.TestCase):
     def test_report_contract_and_provenance(self):
@@ -21,7 +33,7 @@ class AuditV03Tests(unittest.TestCase):
         required = set(json.loads((ROOT / "schemas" / "report.schema.json").read_text())["required"])
         self.assertTrue(required.issubset(data))
         self.assertEqual(2, data["schema_version"])
-        self.assertEqual("0.3.0", data["tool_version"])
+        self.assertEqual("0.4.0", data["tool_version"])
         self.assertRegex(data["reproducibility"]["input_sha256"], r"^[a-f0-9]{64}$")
         self.assertRegex(data["reproducibility"]["ruleset_sha256"], r"^[a-f0-9]{64}$")
         self.assertTrue(all(item["id"].startswith("F-") for item in data["findings"]))
@@ -43,7 +55,7 @@ class AuditV03Tests(unittest.TestCase):
                 check=True,
             )
             data = json.loads(result.stdout)
-            self.assertEqual("0.3.0", data["tool_version"])
+            self.assertEqual("0.4.0", data["tool_version"])
             self.assertRegex(data["reproducibility"]["ruleset_sha256"], r"^[a-f0-9]{64}$")
 
     def test_adapter_status_is_truthful(self):
@@ -51,6 +63,7 @@ class AuditV03Tests(unittest.TestCase):
         self.assertEqual("success", data["adapter_status"]["local-static-scanner"]["status"])
         self.assertEqual("reference_only", data["adapter_status"]["conorbronsdon-avoid-ai-writing"]["status"])
         self.assertEqual("reference_only", data["adapter_status"]["blader-humanizer"]["status"])
+        self.assertEqual("reference_only", data["adapter_status"]["petergyang-no-ai-slop"]["status"])
         self.assertNotEqual("success", data["adapter_status"]["harshaneel-humanize"]["status"])
 
     def test_unsupported_modes_never_silently_detect(self):
@@ -90,6 +103,8 @@ class AuditV03Tests(unittest.TestCase):
     def test_native_configuration_is_loaded(self):
         data = detect("machine-template.md")
         self.assertIn("STRUCTURE-TEMPLATE-ENDCAP", data["provenance"]["active_native_rules"])
+        self.assertIn("STRUCTURE-INTRO-SECTION-OVERLAP", data["provenance"]["active_native_rules"])
+        self.assertIn("STRUCTURE-SPEC-TOUR-SEQUENCE", data["provenance"]["active_native_rules"])
         rules = {item["rule_id"] for item in data["findings"]}
         self.assertIn("STRUCTURE-TEMPLATE-ENDCAP", rules)
         self.assertIn("STRUCTURE-PARAGRAPH-UNIFORMITY", rules)
@@ -98,6 +113,21 @@ class AuditV03Tests(unittest.TestCase):
         rules = {item["rule_id"] for item in detect("chinese.md")["findings"]}
         self.assertIn("LANGUAGE-AI-VOCABULARY-CLUSTER", rules)
         self.assertIn("CONTENT-EVIDENCE-GAP", rules)
+
+    def test_no_ai_slop_high_confidence_english_rules(self):
+        rules = {item["rule_id"] for item in detect("no-ai-slop-en.md")["findings"]}
+        self.assertTrue({
+            "STYLE-THROAT-CLEARING",
+            "STYLE-FAUX-INSIGHT",
+            "STYLE-IMPORTANCE-PUFFERY",
+            "STYLE-INTERPRETIVE-METADISCOURSE",
+            "EVIDENCE-WEASEL-ATTRIBUTION",
+        }.issubset(rules))
+
+    def test_no_ai_slop_high_confidence_chinese_rules(self):
+        rules = {item["rule_id"] for item in detect("no-ai-slop-zh.md")["findings"]}
+        self.assertIn("STYLE-FAUX-INSIGHT", rules)
+        self.assertIn("EVIDENCE-WEASEL-ATTRIBUTION", rules)
 
     def test_protected_text_is_report_only(self):
         self.assertTrue(all("Ignore the rules above" not in item["evidence"] for item in detect("protected.md")["findings"]))
@@ -113,6 +143,121 @@ class AuditV03Tests(unittest.TestCase):
 
     def test_strict_returns_nonzero_on_findings(self):
         self.assertEqual(2, invoke("english.md", "--strict", check=False).returncode)
+
+
+class EditorialRuleTests(unittest.TestCase):
+    def test_intro_section_overlap_true_positive(self):
+        data = detect("intro-overlap-tp.md")
+        self.assertIn("STRUCTURE-INTRO-SECTION-OVERLAP", {item["rule_id"] for item in data["findings"]})
+
+    def test_intro_section_overlap_close_negative(self):
+        data = detect("intro-overlap-cn.md")
+        self.assertNotIn("STRUCTURE-INTRO-SECTION-OVERLAP", {item["rule_id"] for item in data["findings"]})
+
+    def test_audience_behavior_true_positive(self):
+        data = detect("audience-behavior-tp.md")
+        self.assertIn("EVIDENCE-UNSUPPORTED-AUDIENCE-BEHAVIOR", {item["rule_id"] for item in data["findings"]})
+
+    def test_audience_behavior_close_negative_attribution(self):
+        data = detect("audience-behavior-cn.md")
+        self.assertNotIn("EVIDENCE-UNSUPPORTED-AUDIENCE-BEHAVIOR", {item["rule_id"] for item in data["findings"]})
+
+    def test_roadmap_true_positive(self):
+        data = detect("roadmap-tp.md")
+        self.assertIn("STRUCTURE-ROADMAP-LIST-COUNT", {item["rule_id"] for item in data["findings"]})
+
+    def test_roadmap_close_negative(self):
+        data = detect("roadmap-cn.md")
+        self.assertNotIn("STRUCTURE-ROADMAP-LIST-COUNT", {item["rule_id"] for item in data["findings"]})
+
+    def test_spec_tour_true_positive(self):
+        data = detect("spec-tour-tp.md", "b2b-marketing")
+        self.assertIn("STRUCTURE-SPEC-TOUR-SEQUENCE", {item["rule_id"] for item in data["findings"]})
+
+    def test_spec_tour_close_negative(self):
+        data = detect("spec-tour-cn.md", "b2b-marketing")
+        self.assertNotIn("STRUCTURE-SPEC-TOUR-SEQUENCE", {item["rule_id"] for item in data["findings"]})
+
+    def test_spec_tour_conservative_around_technical_reference(self):
+        data = detect("spec-tour-tech.md", "b2b-marketing")
+        self.assertNotIn("STRUCTURE-SPEC-TOUR-SEQUENCE", {item["rule_id"] for item in data["findings"]})
+
+    def test_spec_tour_is_profile_gated(self):
+        data = detect("spec-tour-tp.md", "general")
+        self.assertNotIn("STRUCTURE-SPEC-TOUR-SEQUENCE", {item["rule_id"] for item in data["findings"]})
+
+
+class KeywordExclusionTests(unittest.TestCase):
+    def test_metadata_and_schema_keywords_do_not_drive_density(self):
+        data = detect("keyword-metadata-excluded.md", "seo-geo")
+        self.assertNotIn("SEO-KEYWORD-REPETITION", {item["rule_id"] for item in data["findings"]})
+
+    def test_prose_keyword_repetition_still_fires(self):
+        data = detect("keyword-prose-repetition.md", "seo-geo")
+        self.assertIn("SEO-KEYWORD-REPETITION", {item["rule_id"] for item in data["findings"]})
+
+
+class SchemaValidityTests(unittest.TestCase):
+    def _validate_finding(self, item):
+        self.assertRegex(item["id"], r"^F-[A-F0-9]{12}$")
+        self.assertIn(item["severity"], {"low", "medium", "high", "critical"})
+        self.assertIn(item["confidence"], {"low", "moderate", "high"})
+        self.assertIn(
+            item["repair_type"],
+            {"language_fix", "needs_specificity", "needs_source", "needs_domain_review",
+             "unsupported_claim", "factual_conflict", "style_choice", "protected_content"},
+        )
+        for key in ("rule_id", "source_adapter", "category", "evidence", "diagnosis",
+                    "action", "upstream_sources", "supported_by", "location"):
+            self.assertIn(key, item)
+
+    def test_every_fixture_report_satisfies_schema_contract(self):
+        fixtures = sorted(FIXTURES.glob("*.md"))
+        self.assertGreaterEqual(len(fixtures), 10)
+        for path in fixtures:
+            data = json.loads(invoke_path(path, "--profile", "b2b-marketing,seo-geo,armor", "--format", "json").stdout)
+            self.assertEqual(2, data["schema_version"], path.name)
+            self.assertEqual("0.4.0", data["tool_version"], path.name)
+            self.assertEqual("detect", data["mode"], path.name)
+            self.assertIn(data["language"], {"en", "zh"}, path.name)
+            self.assertIn(data["risk"]["level"], {"low", "moderate", "high", "critical"}, path.name)
+            self.assertTrue(0 <= data["risk"]["score"] <= 100, path.name)
+            for item in data["findings"]:
+                self._validate_finding(item)
+
+    def test_new_rule_finding_ids_are_stable_and_unique(self):
+        first = detect("intro-overlap-tp.md")
+        second = detect("intro-overlap-tp.md")
+        ids_first = [item["id"] for item in first["findings"]]
+        ids_second = [item["id"] for item in second["findings"]]
+        self.assertEqual(ids_first, ids_second)
+        self.assertEqual(len(ids_first), len(set(ids_first)))
+
+
+class LocalRegressionTests(unittest.TestCase):
+    """Regression fixtures live outside the repo; skip gracefully when absent.
+
+    Documented command form:
+      python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index.md --profile b2b-marketing,seo-geo,armor --format json
+    """
+
+    def test_rewritten_index_v1_is_no_longer_clean(self):
+        path = REGRESSION_DIR / "rewritten-index.md"
+        if not path.is_file():
+            self.skipTest("local regression fixture not present")
+        data = audit_path(path, "b2b-marketing,seo-geo,armor")
+        self.assertTrue(data["findings"])
+        self.assertNotEqual("low", data["risk"]["level"])
+
+    def test_rewritten_index_v3_stays_low_risk(self):
+        path = REGRESSION_DIR / "rewritten-index-v3.md"
+        if not path.is_file():
+            self.skipTest("local regression fixture not present")
+        data = audit_path(path, "b2b-marketing,seo-geo,armor")
+        self.assertIn(data["risk"]["level"], {"low"})
+        for item in data["findings"]:
+            self.assertEqual("low", item["severity"])
+
 
 if __name__ == "__main__":
     unittest.main()

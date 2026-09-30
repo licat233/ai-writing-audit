@@ -27,3 +27,27 @@ rules:
   - id: CONTENT-ABSTRACT-BENEFIT-DENSITY
     category: content_quality
     action: replace_stacked_benefit_verbs_with_supported_mechanisms_and_conditions
+  - id: STRUCTURE-INTRO-SECTION-OVERLAP
+    category: structure
+    action: differentiate_intro_and_first_section_claims
+  - id: EVIDENCE-UNSUPPORTED-AUDIENCE-BEHAVIOR
+    category: evidence
+    action: attribute_or_replace_generalized_buyer_behavior
+  - id: STRUCTURE-ROADMAP-LIST-COUNT
+    category: structure
+    action: cut_structure_announcements_and_part_counts
+  - id: STRUCTURE-SPEC-TOUR-SEQUENCE
+    category: structure
+    action: vary_parallel_spec_section_layout_or_justify_reference_format
+  - id: NATIVE-PORTABILITY-TEST
+    category: content_quality
+    action: cut_or_ground_sentences_that_could_move_unchanged_to_another_subject
+  - id: NATIVE-MINIMUM-EFFECTIVE-EDIT
+    category: style
+    action: change_only_what_improves_clarity_truth_or_ai_style_risk
+  - id: NATIVE-PRESERVE-STRONG-HUMAN-LINES
+    category: style
+    action: leave_distinctive_clear_human_sentences_alone
+  - id: NATIVE-CONTEXTUAL-FORMATTING
+    category: style
+    action: remove_decorative_formatting_only_when_it_conflicts_with_genre_or_reader_need

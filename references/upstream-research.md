@@ -1,6 +1,6 @@
 # Upstream research
 
-Investigated 2026-08-06 with read-only GitHub API metadata. Default branches were `main`; no upstream code was copied.
+Initial sources were investigated 2026-08-06 with read-only GitHub API metadata; petergyang/no-ai-slop and hardikpandya/stop-slop were reviewed on 2026-09-28, with licenses checked before recording them. No upstream code is vendored.
 
 | Source | Role | Commit | Tag | License | Phase 1 use |
 |---|---|---|---|---|---|
@@ -9,5 +9,7 @@ Investigated 2026-08-06 with read-only GitHub API metadata. Default branches wer
 | `harshaneel/humanize` | Signal model and research reference | `4ec797314537ec9c2105f276d4561d240a0390ba` | none | MIT | Deferred |
 | `Aboudjem/humanizer-skill` | Voice and rhythm reference | `9a7f35b7b9ad8c3abd71f10757ec9f91fb8ae165` | `v0.1.0` | MIT | Deferred |
 | `gabelul/slopbuster` | Static scanner reference | `8215cbfc9723a52696fb493bd66059663b43c750` | none | MIT | Optional/deferred |
+| petergyang/no-ai-slop | Sentence-level slop taxonomy and voice-preserving editorial gates | 000650b156983f5159695b441477f4e63b25dc85 | main | MIT | Rules/eval reference |
+| hardikpandya/stop-slop | Strict slop-pattern reference; reviewed from user Stars | 8da1f030185bdfe8471220585162991eaeb970e9 | none | MIT | Evaluated/deferred; not active composition |
 
 The GitHub API reported MIT for each repository. This is a preliminary investigation, not legal advice; before vendoring, inspect the repository `LICENSE` at the exact commit and retain attribution.

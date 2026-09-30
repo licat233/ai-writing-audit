@@ -1,9 +1,9 @@
 schema_version: 1
 rules:
   - id: SENTENCE-NEGATIVE-PARALLELISM
-    source: {project: conorbronsdon/avoid-ai-writing, repository: https://github.com/conorbronsdon/avoid-ai-writing, upstream_rule: sentence.not_x_but_y, license: MIT, commit: a575602b3d6cb313dd0ceaf03a121fd8a79c18a6, adapted: true}
+    source: {project: conorbronsdon/avoid-ai-writing, repository: "https://github.com/conorbronsdon/avoid-ai-writing", upstream_rule: sentence.not_x_but_y, license: MIT, commit: a575602b3d6cb313dd0ceaf03a121fd8a79c18a6, adapted: true}
   - id: FORMAT-DASH-DENSITY
-    source: {project: blader/humanizer, repository: https://github.com/blader/humanizer, upstream_rule: formatting, license: MIT, commit: 523374dee72d67c7b2b5f858ea0094ffda49c3ac, adapted: true}
+    source: {project: blader/humanizer, repository: "https://github.com/blader/humanizer", upstream_rule: formatting, license: MIT, commit: 523374dee72d67c7b2b5f858ea0094ffda49c3ac, adapted: true}
   - id: CONTENT-GENERIC-CLAIM
     source: {project: native, repository: local, upstream_rule: semantic-quality, license: MIT, commit: local, adapted: false}
   - id: STRUCTURE-TEMPLATE-ENDCAP
@@ -12,3 +12,13 @@ rules:
     source: {project: native, repository: local, upstream_rule: asymmetric-information-depth, license: MIT, commit: local, adapted: false}
   - id: CONTENT-ABSTRACT-BENEFIT-DENSITY
     source: {project: native, repository: local, upstream_rule: benefit-mechanism-gap, license: MIT, commit: local, adapted: false}
+  - id: STYLE-THROAT-CLEARING
+    source: {project: petergyang/no-ai-slop, repository: "https://github.com/petergyang/no-ai-slop", upstream_rule: throat-clearing-openers, license: MIT, commit: 000650b156983f5159695b441477f4e63b25dc85, adapted: true}
+  - id: STYLE-FAUX-INSIGHT
+    source: {project: petergyang/no-ai-slop, repository: "https://github.com/petergyang/no-ai-slop", upstream_rule: faux-insight-setups, license: MIT, commit: 000650b156983f5159695b441477f4e63b25dc85, adapted: true}
+  - id: STYLE-IMPORTANCE-PUFFERY
+    source: {project: petergyang/no-ai-slop, repository: "https://github.com/petergyang/no-ai-slop", upstream_rule: importance-puffery, license: MIT, commit: 000650b156983f5159695b441477f4e63b25dc85, adapted: true}
+  - id: STYLE-INTERPRETIVE-METADISCOURSE
+    source: {project: petergyang/no-ai-slop, repository: "https://github.com/petergyang/no-ai-slop", upstream_rule: interpretive-metadiscourse, license: MIT, commit: 000650b156983f5159695b441477f4e63b25dc85, adapted: true}
+  - id: EVIDENCE-WEASEL-ATTRIBUTION
+    source: {project: petergyang/no-ai-slop, repository: "https://github.com/petergyang/no-ai-slop", upstream_rule: weasel-attribution, license: MIT, commit: 000650b156983f5159695b441477f4e63b25dc85, adapted: true}
