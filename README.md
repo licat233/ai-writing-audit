@@ -83,7 +83,7 @@ Run these commands from the installed skill directory:
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 /Users/licat/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
+python3 $HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
 ```
 
 If the second command is unavailable outside Codex, the CLI test and the first command are sufficient for Claude Code and Hermes Agent. Use the installed directory in place of the example path.
