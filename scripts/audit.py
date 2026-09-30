@@ -58,16 +58,7 @@ ZH_PATTERNS = [
     ("STRUCTURE-MECHANICAL-SECTIONS", r"(?:首先|其次|最后)[，,]", "structure", "low", "moderate", "style_choice", "Repeated ordinal transitions can make sections feel mechanically generated.", "Keep them only when they reflect a real sequence.", "native"),
 ]
 
-ARMOR_FACT_RULES = {
-    "esl-is-not-lcd": ("ARMOR-FACT-ESL-IS-NOT-LCD", r"\bESL\b[^.!?]{0,60}\b(?:is|are|means?|stands for|equals?)\b[^.!?]{0,30}\bLCD\b", "facts", "high", "moderate", "factual_conflict", "The copy equates ESL with LCD, which are distinct product categories.", "Verify the product category and do not equate ESL with LCD.", "armor-product-knowledge"),
-    "esl-not-electrically-connected-to-power-track-without-evidence": ("ARMOR-FACT-ESL-POWER-TRACK-CONNECTION", r"\bESL\b[^.!?]{0,60}\b(?:electrically connected|wired|powered by|draws? power from)\b[^.!?]{0,30}\b(?:power track|track)\b", "facts", "high", "moderate", "needs_domain_review", "The copy asserts an electrical connection to the power track without confirmed evidence.", "Confirm the connection method or mark the claim for review.", "armor-product-knowledge"),
-    "magnetic-light-needs-compatible-steel-surface": ("ARMOR-FACT-MAGNETIC-SURFACE-REQUIREMENT", r"\bmagnetic\b[^.!?]{0,70}\b(?:any surface|all surfaces|every surface|any shelf|all shelves|no surface preparation|no prep)\b", "facts", "high", "moderate", "needs_domain_review", "The copy implies magnetic lights work on any surface.", "State the ferromagnetic surface requirement or alternative mounting method.", "armor-product-knowledge"),
-    "no-unsupported-zero-install-cost-or-roi": ("ARMOR-FACT-UNSUPPORTED-ZERO-INSTALL-ROI", r"\b(?:zero|no|free)\s+install(?:ation)?\s+cost\b|\bROI\b[^.!?]{0,40}\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*%\s+ROI\b", "facts", "high", "moderate", "unsupported_claim", "The copy states zero install cost or a specific ROI figure without a supporting source.", "Add verified case data or qualify/remove the claim.", "armor-product-knowledge"),
-    "verify-voltage-and-connection": ("ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION", r"\b\d{2,4}\s*[Vv]\b", "facts", "medium", "low", "needs_domain_review", "The copy gives a specific voltage or connection value that requires product verification.", "Verify it against product documentation or mark it for review.", "armor-product-knowledge"),
-}
-
-
-SPEC_TOUR_PROFILES = {"b2b-marketing", "seo-geo", "armor"}
+SPEC_TOUR_PROFILES = {"b2b-marketing", "seo-geo"}
 AUDIENCE_BEHAVIOR_RE = re.compile(
     r"\b(?:"
     r"(?:the|a|every|any) (?:shopper|buyer|customer)'?s? (?:decision|choice|attention|instinct|hand|eye) (?:happens|takes place|is (?:made|decided))"
@@ -133,7 +124,7 @@ def parse_inline_map(text: str, key: str) -> dict[str, float]:
 
 
 def load_profiles(profile_ids: Iterable[str]) -> dict[str, Any]:
-    merged: dict[str, Any] = {"focus": set(), "facts": set(), "exceptions": set(), "protect": set(), "weights": {}}
+    merged: dict[str, Any] = {"focus": set(), "exceptions": set(), "protect": set(), "weights": {}}
     loaded = []
     for profile_id in profile_ids:
         path = PROFILES_DIR / f"{profile_id}.yaml"
@@ -141,7 +132,7 @@ def load_profiles(profile_ids: Iterable[str]) -> dict[str, Any]:
             raise ValueError(f"unknown profile: {profile_id}")
         text = path.read_text(encoding="utf-8")
         loaded.append(profile_id)
-        for key in ("focus", "facts", "exceptions", "protect"):
+        for key in ("focus", "exceptions", "protect"):
             merged[key].update(parse_inline_list(text, key))
         merged["weights"].update(parse_inline_map(text, "weights"))
     merged["loaded"] = loaded
@@ -339,7 +330,7 @@ def roadmap_findings(text: str, protected: list[tuple[int, int]]) -> list[Findin
 def spec_tour_findings(text: str, config: dict[str, Any], native_ids: set[str], protected: list[tuple[int, int]]) -> list[Finding]:
     """Flag 4+ consecutive parallel H3 spec-tour sections.
 
-    Conservative: profile-gated to b2b-marketing/seo-geo/armor and skipped for
+    Conservative: profile-gated to b2b-marketing/seo-geo and skipped for
     documents that read as technical references (API/endpoint/parameter pages).
     """
     if "STRUCTURE-SPEC-TOUR-SEQUENCE" not in native_ids or not SPEC_TOUR_PROFILES.intersection(config["loaded"]):
@@ -506,18 +497,6 @@ def profile_findings(text: str, language: str, config: dict[str, Any], protected
     return results
 
 
-def armor_fact_findings(text: str, fact_ids: Iterable[str], protected: list[tuple[int, int]]) -> list[Finding]:
-    results = []
-    for fact_id in fact_ids:
-        rule = ARMOR_FACT_RULES.get(fact_id)
-        if not rule:
-            continue
-        rule_id, pattern, category, severity, confidence, repair_type, diagnosis, action, source = rule
-        for match in re.finditer(pattern, text, re.I):
-            results.append(finding(rule_id, category, severity, confidence, match.group(0).strip(), match.start(), match.end(), diagnosis, action, repair_type, (source,), is_protected(match.start(), match.end(), protected)))
-    return results
-
-
 def scan_text(text: str, context: AuditContext, profile_config: dict[str, Any] | None = None) -> list[Finding]:
     language = detect_language(text) if context.language == "auto" else context.language
     config = profile_config or load_profiles(context.profile_ids)
@@ -529,7 +508,6 @@ def scan_text(text: str, context: AuditContext, profile_config: dict[str, Any] |
             if not match.group(0).strip() or is_protected(match.start(), match.end(), protected):
                 continue
             results.append(finding(rule_id, category, severity, confidence, match.group(0).strip(), match.start(), match.end(), diagnosis, action, repair_type, tuple(sources.split(";"))))
-    results.extend(armor_fact_findings(text, config["facts"], protected))
     results.extend(structural_findings(text, language, protected, active_native_rule_ids()))
     results.extend(profile_findings(text, language, config, protected))
     results.extend(editorial_risk_findings(text, config, protected, active_native_rule_ids()))
