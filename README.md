@@ -4,7 +4,7 @@
 
 It measures AI-style writing risk. It does not determine who or what authored a text, and it does not output an AI-generation probability.
 
-The v0.3 CLI performs an offline deterministic audit. Full repair is performed by the Agent using `SKILL.md` and `references/native-optimization.md`:
+The v0.4 CLI performs an offline deterministic audit. Full repair is performed by the Agent using `SKILL.md` and `references/native-optimization.md`:
 
 ```bash
 python3 /path/to/ai-writing-audit/scripts/audit.py article.md --mode detect --language auto --profile general --format markdown
@@ -30,14 +30,14 @@ The repair workflow is not a synonym for “make it undetectable.” It improves
 
 ## Installation
 
-The repository is private. Make sure the agent or terminal is authenticated to GitHub as an account that can read `licat233/ai-writing-audit`.
+The repository is public and can be cloned directly. Organization-specific brand facts, product constraints, legal policies, and private editorial rules should live in downstream integrations or private overlays, not in this repository.
 
 ### Install with an Agent
 
 You can ask the agent directly:
 
 ```text
-Install the private GitHub skill licat233/ai-writing-audit for this agent.
+Install the GitHub skill licat233/ai-writing-audit for this agent.
 Clone it into the agent's user-level skills directory, verify SKILL.md, and run the bundled tests. Do not modify the source repository.
 ```
 
@@ -77,18 +77,6 @@ python3 ~/.hermes/skills/ai-writing-audit/scripts/audit.py article.md --mode det
 
 Restart or reload Hermes skills if your installation caches the skill list. Hermes reads the same `SKILL.md`; no Hermes-specific plugin or MCP server is required.
 
-### Private repository authentication
-
-If HTTPS cloning asks for credentials, authenticate with GitHub CLI first:
-
-```bash
-gh auth login
-gh auth status
-git clone https://github.com/licat233/ai-writing-audit.git ~/.codex/skills/ai-writing-audit
-```
-
-Do not put a personal access token directly into a clone URL or commit it to a repository.
-
 ### Verify an installation
 
 Run these commands from the installed skill directory:
@@ -100,13 +88,12 @@ python3 /Users/licat/.codex/skills/.system/skill-creator/scripts/quick_validate.
 
 If the second command is unavailable outside Codex, the CLI test and the first command are sufficient for Claude Code and Hermes Agent. Use the installed directory in place of the example path.
 
-## Local regression
+## Testing
 
-The `tests/test_audit.py::LocalRegressionTests` class audits two local rewrite fixtures when they are present and skips otherwise. Run the same check manually with:
+Run the bundled regression suite:
 
 ```bash
-python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index.md --profile b2b-marketing,seo-geo,armor --format json   # must NOT be low/clean
-python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index-v3.md --profile b2b-marketing,seo-geo,armor --format json  # must stay low
+python3 -m unittest discover -s tests -v
 ```
 
-A deterministic `low`/`PASS` result is a scan outcome, not an approval to publish: the human editorial gates in `references/native-optimization.md` still apply.
+The tests use generic fixtures only. Company- or brand-specific facts belong outside this public skill.
