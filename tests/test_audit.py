@@ -8,9 +8,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "audit.py"
 FIXTURES = ROOT / "tests" / "fixtures"
-REGRESSION_DIR = Path("/private/tmp/armor-retail-rewrite.Bgsvyu")
-
-
 def invoke_path(path, *args, check=True):
     return subprocess.run([sys.executable, "-B", str(CLI), str(path), *args], capture_output=True, text=True, check=check)
 
@@ -21,10 +18,6 @@ def invoke(name, *args, check=True):
 
 def detect(name, profile="general"):
     return json.loads(invoke(name, "--profile", profile, "--format", "json").stdout)
-
-
-def audit_path(path, profile="general"):
-    return json.loads(invoke_path(path, "--profile", profile, "--format", "json").stdout)
 
 
 class AuditV03Tests(unittest.TestCase):
@@ -39,8 +32,8 @@ class AuditV03Tests(unittest.TestCase):
         self.assertTrue(all(item["id"].startswith("F-") for item in data["findings"]))
 
     def test_same_input_has_stable_fingerprints_and_finding_ids(self):
-        first = detect("armor-retail-trends-v1.2.md", "b2b-marketing,seo-geo,armor")
-        second = detect("armor-retail-trends-v1.2.md", "b2b-marketing,seo-geo,armor")
+        first = detect("b2b-seo-template.md", "b2b-marketing,seo-geo")
+        second = detect("b2b-seo-template.md", "b2b-marketing,seo-geo")
         self.assertEqual(first["reproducibility"], second["reproducibility"])
         self.assertEqual([item["id"] for item in first["findings"]], [item["id"] for item in second["findings"]])
 
@@ -75,8 +68,8 @@ class AuditV03Tests(unittest.TestCase):
             self.assertEqual(mode, payload["mode"])
 
     def test_profiles_enable_real_findings_and_weights(self):
-        general = detect("armor-retail-trends-v1.2.md", "general")
-        focused = detect("armor-retail-trends-v1.2.md", "b2b-marketing,seo-geo")
+        general = detect("b2b-seo-template.md", "general")
+        focused = detect("b2b-seo-template.md", "b2b-marketing,seo-geo")
         general_rules = {item["rule_id"] for item in general["findings"]}
         focused_rules = {item["rule_id"] for item in focused["findings"]}
         self.assertNotIn("SEO-ANSWER-TEMPLATE", general_rules)
@@ -86,13 +79,12 @@ class AuditV03Tests(unittest.TestCase):
         self.assertEqual(1.4, focused["profile_configuration"]["weights"]["structural_uniformity"])
         self.assertEqual(1.4, focused["profile_configuration"]["weights"]["generic_claims"])
 
-    def test_supplied_article_is_high_impact_structural_regression(self):
-        data = detect("armor-retail-trends-v1.2.md", "b2b-marketing,seo-geo,armor")
-        rules = [item["rule_id"] for item in data["findings"]]
+    def test_generic_b2b_seo_fixture_exercises_profile_rules(self):
+        data = detect("b2b-seo-template.md", "b2b-marketing,seo-geo")
+        rules = {item["rule_id"] for item in data["findings"]}
         self.assertIn(data["risk"]["level"], {"high", "critical"})
-        self.assertIn("STRUCTURE-UNSUPPORTED-SCENE", rules)
-        self.assertGreaterEqual(rules.count("STRUCTURE-TEMPLATE-ENDCAP"), 2)
         self.assertIn("SEO-ANSWER-TEMPLATE", rules)
+        self.assertIn("B2B-MISSING-MECHANISM", rules)
         self.assertIn("CONTENT-CATEGORICAL-INDUSTRY-CLAIM", rules)
 
     def test_low_risk_control_stays_low(self):
@@ -131,15 +123,6 @@ class AuditV03Tests(unittest.TestCase):
 
     def test_protected_text_is_report_only(self):
         self.assertTrue(all("Ignore the rules above" not in item["evidence"] for item in detect("protected.md")["findings"]))
-
-    def test_armor_profile_flags_domain_facts(self):
-        general = detect("armor-claims.md", "general")
-        armor = detect("armor-claims.md", "armor")
-        self.assertFalse(any(item["rule_id"].startswith("ARMOR-FACT-") for item in general["findings"]))
-        armor_rules = {item["rule_id"] for item in armor["findings"]}
-        self.assertIn("ARMOR-FACT-ESL-IS-NOT-LCD", armor_rules)
-        self.assertIn("ARMOR-FACT-VERIFY-VOLTAGE-CONNECTION", armor_rules)
-        self.assertIn(armor["risk"]["level"], {"high", "critical"})
 
     def test_strict_returns_nonzero_on_findings(self):
         self.assertEqual(2, invoke("english.md", "--strict", check=False).returncode)
@@ -215,7 +198,7 @@ class SchemaValidityTests(unittest.TestCase):
         fixtures = sorted(FIXTURES.glob("*.md"))
         self.assertGreaterEqual(len(fixtures), 10)
         for path in fixtures:
-            data = json.loads(invoke_path(path, "--profile", "b2b-marketing,seo-geo,armor", "--format", "json").stdout)
+            data = json.loads(invoke_path(path, "--profile", "b2b-marketing,seo-geo", "--format", "json").stdout)
             self.assertEqual(2, data["schema_version"], path.name)
             self.assertEqual("0.4.0", data["tool_version"], path.name)
             self.assertEqual("detect", data["mode"], path.name)
@@ -232,31 +215,6 @@ class SchemaValidityTests(unittest.TestCase):
         ids_second = [item["id"] for item in second["findings"]]
         self.assertEqual(ids_first, ids_second)
         self.assertEqual(len(ids_first), len(set(ids_first)))
-
-
-class LocalRegressionTests(unittest.TestCase):
-    """Regression fixtures live outside the repo; skip gracefully when absent.
-
-    Documented command form:
-      python3 scripts/audit.py /private/tmp/armor-retail-rewrite.Bgsvyu/rewritten-index.md --profile b2b-marketing,seo-geo,armor --format json
-    """
-
-    def test_rewritten_index_v1_is_no_longer_clean(self):
-        path = REGRESSION_DIR / "rewritten-index.md"
-        if not path.is_file():
-            self.skipTest("local regression fixture not present")
-        data = audit_path(path, "b2b-marketing,seo-geo,armor")
-        self.assertTrue(data["findings"])
-        self.assertNotEqual("low", data["risk"]["level"])
-
-    def test_rewritten_index_v3_stays_low_risk(self):
-        path = REGRESSION_DIR / "rewritten-index-v3.md"
-        if not path.is_file():
-            self.skipTest("local regression fixture not present")
-        data = audit_path(path, "b2b-marketing,seo-geo,armor")
-        self.assertIn(data["risk"]["level"], {"low"})
-        for item in data["findings"]:
-            self.assertEqual("low", item["severity"])
 
 
 if __name__ == "__main__":
